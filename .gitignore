@@ -1,0 +1,33 @@
+# .NET & tModLoader Build Artifacts
+bin/
+obj/
+*.tmod
+*.dll
+*.pdb
+
+# Visual Studio / Rider / IDE cache
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs and Crash Dumps
+*.log
+CrashReports/

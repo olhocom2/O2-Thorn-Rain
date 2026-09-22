@@ -1,0 +1,16 @@
+[h1]O2 Thorn Rain[/h1]
+
+[b]O2 Thorn Rain[/b] turns ordinary rain into an adrenaline-fueled survival challenge! When rainfall starts in Terraria, deadly spikes rain down relentlessly from the sky upon the surface world.
+
+[h2]Features[/h2]
+[list]
+[*] [b]Atmospheric Hazard:[/b] Raining thorns fall from above during storm events.
+[*] [b]Dynamic Trajectory:[/b] Spike trajectories drift realistically based on the world's current wind speed.
+[*] [b]Surface Protection Check:[/b] Spikes only drop on surface and sky layers, sparing underground explorers and caves.
+[*] [b]Engine Optimization:[/b] Built-in spawn pacing and global active projectile caps keep your frame rate smooth and lag-free.
+[*] [b]Multiplayer Friendly:[/b] Server-authoritative logic avoids desyncs on dedicated and host & play servers.
+[/list]
+
+[h2]Credits[/h2]
+Created by [b]olhocom2[/b].
+Check the repository on [url=https://github.com/olhocom2/O2-Thorn-Rain]GitHub[/url]!
