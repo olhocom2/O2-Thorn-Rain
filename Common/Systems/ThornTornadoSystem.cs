@@ -40,13 +40,8 @@ public class ThornTornadoSystem : ModSystem
     // CONFIGURAÇÃO CENTRALIZADA
     // =========================================================
 
-    // 50% de chance a cada verificação.
-    //
-    // Para teste.
-    //
-    // Depois podemos voltar para algo como:
-    // 0.08f = 8%
-    public const float TornadoSpawnChance = 0.50f;
+    // A chance de spawn agora é dinâmica e determinada pela intensidade
+    // da chuva de espinhos em SpikeRainSystem.GetCurrentTornadoChance().
 
 
     // 600 ticks = 10 segundos.
@@ -206,12 +201,15 @@ public class ThornTornadoSystem : ModSystem
 
 
         // -----------------------------------------------------
-        // CHANCE
+        // CHANCE BASEADA NA INTENSIDADE CLIMÁTICA
         // -----------------------------------------------------
+
+        float currentTornadoChance =
+            SpikeRainSystem.GetCurrentTornadoChance();
 
         if (
             Main.rand.NextFloat() <=
-            TornadoSpawnChance
+            currentTornadoChance
         )
         {
             _targetPlayerIndex =

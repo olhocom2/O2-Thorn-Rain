@@ -6,4 +6,6 @@ Projectiles: {
 Events: {
 	TornadoWarning: A tornado threat has been spotted nearby...
 	TornadoIncoming: A thorn tornado is approaching!
+	RainIntensifying: The thorn rain is growing more intense...
+	StormApproaching: A thorn storm is approaching!
 }

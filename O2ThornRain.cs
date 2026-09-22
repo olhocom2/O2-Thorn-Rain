@@ -1,15 +1,26 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
 using Terraria.ModLoader;
+using O2ThornRain.Common.Systems;
 
-namespace O2ThornRain
+namespace O2ThornRain;
+
+public enum MessageType : byte
 {
-	// Please read https://github.com/tModLoader/tModLoader/wiki/Basic-tModLoader-Modding-Guide#mod-skeleton-contents for more information about the various files in a mod.
-	public class O2ThornRain : Mod
-	{
+    SyncThornRainIntensity
+}
 
-	}
+public class O2ThornRain : Mod
+{
+    public override void HandlePacket(BinaryReader reader, int whoAmI)
+    {
+        MessageType msgType = (MessageType)reader.ReadByte();
+
+        switch (msgType)
+        {
+            case MessageType.SyncThornRainIntensity:
+                byte intensity = reader.ReadByte();
+                SpikeRainSystem.SetIntensityFromNet((ThornRainIntensity)intensity);
+                break;
+        }
+    }
 }

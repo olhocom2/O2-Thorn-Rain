@@ -6,4 +6,6 @@ Projectiles: {
 Events: {
 	TornadoWarning: Uma ameaça de tornado foi avistada aos arredores...
 	TornadoIncoming: Um tornado de espinhos se aproxima!
+	RainIntensifying: A chuva de espinhos está ficando mais intensa...
+	StormApproaching: Uma tempestade de espinhos se aproxima!
 }
