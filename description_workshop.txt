@@ -28,6 +28,25 @@ Need an Umbrella? Vanilla Umbrella Slimes now have a 5% chance to drop the vanil
 Drinking an Ironskin Potion grants absolute immunity to Thorn Rain damage while the buff is active (and spares your Umbrella from losing durability)!
 [/list]
 
+[h2]Version History[/h2]
+[b]v0.2.0 - Protection & Progression Update[/b]
+[list]
+[*] Added Vanilla Umbrella protection with exposure durability (100% to 0%).
+[*] Added inventory durability bar and status tooltips (New, Damaged, Almost Broken, Broken).
+[*] Added 5% Umbrella drop chance to vanilla Umbrella Slimes.
+[*] Added Ironskin Potion full immunity against Thorn Rain.
+[*] Added progressive damage scaling from Pre-Hardmode to Post-Moon Lord.
+[*] Optimized spawner pacing and projectile caps (120 global, 70 per-player).
+[/list]
+
+[b]v0.1.0 - Initial Release[/b]
+[list]
+[*] Initial release of O2 Thorn Rain.
+[*] Dynamic falling thorn hazards during rainy weather.
+[*] Wind-influenced projectile drift.
+[*] Surface and sky layer detection.
+[/list]
+
 [h2]Credits[/h2]
 Created by [b]olhocom2[/b].
 Check the repository on [url=https://github.com/olhocom2/O2-Thorn-Rain]GitHub[/url]!

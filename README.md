@@ -1,5 +1,6 @@
 # O2 Thorn Rain 🌧️🌵
 
+[![Version](https://img.shields.io/badge/version-v0.2.0-informational.svg)](CHANGELOG.md)
 [![Terraria](https://img.shields.io/badge/Terraria-v1.4.4.9-green.svg)](https://terraria.org/)
 [![tModLoader](https://img.shields.io/badge/tModLoader-v2023.11+-orange.svg)](https://github.com/tModLoader/tModLoader)
 [![C#](https://img.shields.io/badge/Language-C%23-blue.svg)](https://learn.microsoft.com/en-us/dotnet/csharp/)
@@ -83,6 +84,7 @@ O2ThornRain/
 ├── icon.png                         # Mod icon (80x80)
 ├── icon_small.png                   # Small mod icon
 ├── O2ThornRain.csproj               # .NET project file
+├── CHANGELOG.md                     # Semantic version history and release notes
 ├── CONTRIBUTING.md                  # Contribution guidelines
 ├── COMMIT_CONVENTION.md             # Conventional commit standards
 └── README.md                        # Documentation
@@ -121,6 +123,13 @@ Run dotnet build pointing to the project:
 ```bash
 dotnet build O2ThornRain.csproj
 ```
+
+## 📝 Version History & Changelog
+
+All notable changes and release milestones are tracked in detail in [CHANGELOG.md](CHANGELOG.md).
+
+- **v0.2.0 (Latest):** The Protection Update — Vanilla Umbrella protection with exposure durability, inventory status bar, Ironskin Potion immunity, 5% Umbrella Slime drop, and progressive hazard damage scaling.
+- **v0.1.0:** Initial Release — Environmental hazard spawner, wind-drift physics, and surface layer detection.
 
 ---
 

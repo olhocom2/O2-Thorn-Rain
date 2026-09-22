@@ -1,4 +1,4 @@
-O2 Thorn Rain introduces a perilous environmental hazard to your Terraria world! 
+O2 Thorn Rain ( v0.2.0 - Protection & Progression Update ) introduces a perilous environmental hazard to your Terraria world! 
 During rainy weather, sharp thorns and spikes fall continuously from the heavens, challenging surface survival.
 Protect yourself using the vanilla Umbrella (now featuring exposure durability) or an Ironskin Potion!
 Features wind-influenced physics, progressive damage scaling, surface-only hazard zones, and intelligent FPS-conscious projectile management.
