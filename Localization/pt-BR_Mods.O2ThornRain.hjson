@@ -1,7 +1,28 @@
 Projectiles: {
 	SpikesProjectile.DisplayName: Espinho Pontiagudo
 	ThornTornadoProjectile.DisplayName: Tornado de Espinhos
+	ThornDragonProjectile.DisplayName: Dragão de Espinhos
 }
+
+Items: {
+	DragonPower: {
+		DisplayName: Poder do Dragão
+		Tooltip:
+			'''
+			Invoca uma poderosa montaria de dragão da tempestade
+			Concede voo livre e imunidade aos espinhos da Thorn Rain enquanto montado
+			'''
+	}
+}
+
+Buffs: {
+	DragonMountBuff: {
+		DisplayName: Dragão da Tempestade
+		Description: Você cavalga a tempestade. Imune aos espinhos da Thorn Rain!
+	}
+}
+
+Mounts.DragonMount.DisplayName: Dragão da Tempestade
 
 NPCs: {
 	ThornStormSummonTornado.DisplayName: Pequeno Vórtice Abissal

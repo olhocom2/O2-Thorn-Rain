@@ -7,21 +7,22 @@ using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
 using O2ThornRain.Common.Systems;
+using O2ThornRain.Content.Items;
 using O2ThornRain.Content.Projectiles;
 
 namespace O2ThornRain.Content.NPCs;
 
 /// <summary>
 /// Boss final do evento "A Tempestade dos Quatro".
-/// Um tornado gigantesco de tempestade que persegue e pressiona o jogador,
-/// possui 3 fases de combate de acordo com sua vida, desfere chuvas e rajadas
-/// de espinhos respeitando MaxGlobalSpikes = 120 e GetSpikeDamage(),
-/// e prepara o gancho para os Thorn Dragons na Etapa 3.
+/// Um tornado gigantesco carmesim/vermelho que persegue e pressiona o jogador,
+/// possui 3 fases de combate de acordo com sua vida, desfere chuvas de espinhos,
+/// cospe Dragões de Espinhos (Thorn Dragons) e dropa o item "Poder do Dragão" ao ser derrotado.
 /// </summary>
 public class ThornStormBoss : ModNPC
 {
+    // Reutiliza o sprite do tornado pet (Tempest) do Duke Fishron
     public override string Texture =>
-        $"Terraria/Images/Projectile_{ProjectileID.Cthulunado}";
+        $"Terraria/Images/Projectile_{ProjectileID.Tempest}";
 
     private const int FrameCount = 6;
     private const int AnimationSpeed = 3;
@@ -52,6 +53,8 @@ public class ThornStormBoss : ModNPC
     private ref float ChargeTimer => ref NPC.ai[1];
     private ref float ChargeState => ref NPC.ai[2]; // 0: normal, 1: preparando investida, 2: investindo
     private ref float InternalCounter => ref NPC.ai[3];
+
+    private int _dragonTimer;
 
     public override void SetStaticDefaults()
     {
@@ -269,7 +272,10 @@ public class ThornStormBoss : ModNPC
 
     private void UpdateAttacks(Player target, BossPhase phase)
     {
-        // Se o limite global de espinhos já foi atingido, não dispara
+        // 1. Invocação periódica de Dragões de Espinhos (Thorn Dragons)
+        UpdateThornDragons(target, phase);
+
+        // 2. Se o limite global de espinhos já foi atingido, não dispara novos espinhos
         if (SpikesProjectile.ActiveCount >= SpikeRainSystem.MaxGlobalSpikes)
             return;
 
@@ -418,9 +424,75 @@ public class ThornStormBoss : ModNPC
         }
 
         // =========================================================================
-        // GANCHO ETAPA 3: Thorn Dragons
-        // (Será acionado aqui na próxima etapa para invocar os dragões de espinhos)
+        // ETAPA 3: Invocação dos Dragões de Espinhos (Thorn Dragons)
         // =========================================================================
+    }
+
+    private void UpdateThornDragons(Player target, BossPhase phase)
+    {
+        _dragonTimer++;
+
+        int interval;
+        int maxDragons;
+
+        switch (phase)
+        {
+            case BossPhase.Phase1_Gathering:
+                interval = 480; // a cada 8 segundos
+                maxDragons = 1;
+                break;
+
+            case BossPhase.Phase2_Gale:
+                interval = 300; // a cada 5 segundos
+                maxDragons = 2;
+                break;
+
+            case BossPhase.Phase3_Cataclysm:
+            default:
+                interval = 210; // a cada 3.5 segundos
+                maxDragons = 3;
+                break;
+        }
+
+        if (_dragonTimer >= interval)
+        {
+            _dragonTimer = 0;
+
+            int dragonType = ModContent.ProjectileType<ThornDragonProjectile>();
+            int currentDragons = 0;
+            for (int i = 0; i < Main.maxProjectiles; i++)
+            {
+                Projectile p = Main.projectile[i];
+                if (p.active && p.type == dragonType)
+                    currentDragons++;
+            }
+
+            if (currentDragons < maxDragons)
+            {
+                Vector2 toTarget = target.Center - NPC.Center;
+                if (toTarget != Vector2.Zero)
+                    toTarget.Normalize();
+                else
+                    toTarget = new Vector2(0f, 1f);
+
+                toTarget *= 14f;
+
+                Projectile.NewProjectile(
+                    NPC.GetSource_FromAI(),
+                    NPC.Center,
+                    toTarget,
+                    dragonType,
+                    ThornDragonProjectile.ThornDragonDamage,
+                    4f,
+                    Main.myPlayer
+                );
+
+                SoundEngine.PlaySound(
+                    SoundID.ForceRoar with { Pitch = 0.15f, Volume = 0.9f },
+                    NPC.Center
+                );
+            }
+        }
     }
 
     // =========================================================================
@@ -443,7 +515,7 @@ public class ThornStormBoss : ModNPC
 
     private void SpawnStormDust()
     {
-        // Partículas atmosféricas do boss: água, eletricidade e tempestade escura
+        // Partículas atmosféricas do boss: tornado vermelho carmesim, fogo, sangue e eletricidade
         if (Main.rand.NextBool(2))
         {
             Vector2 offset = new(
@@ -453,9 +525,9 @@ public class ThornStormBoss : ModNPC
 
             int dustType = Main.rand.Next(3) switch
             {
-                0 => DustID.Electric,
-                1 => DustID.Water,
-                _ => DustID.Shadowflame
+                0 => DustID.CrimsonTorch,
+                1 => DustID.RedTorch,
+                _ => DustID.Blood
             };
 
             Dust dust = Dust.NewDustDirect(
@@ -467,7 +539,7 @@ public class ThornStormBoss : ModNPC
                 Main.rand.NextFloat(-3f, 1f),
                 100,
                 default,
-                Main.rand.NextFloat(1.1f, 1.7f)
+                Main.rand.NextFloat(1.3f, 2.0f)
             );
             dust.noGravity = true;
         }
@@ -475,7 +547,8 @@ public class ThornStormBoss : ModNPC
 
     public override bool PreDraw(SpriteBatch spriteBatch, Vector2 screenPos, Color drawColor)
     {
-        Texture2D texture = TextureAssets.Projectile[ProjectileID.Cthulunado].Value;
+        // Utiliza o modelo do pet tornado (Tempest) do Duke Fishron desenhado em escala gigante e cor vermelha
+        Texture2D texture = TextureAssets.Projectile[ProjectileID.Tempest].Value;
 
         Rectangle frame = texture.Frame(
             1,
@@ -487,22 +560,22 @@ public class ThornStormBoss : ModNPC
         Vector2 origin = frame.Size() / 2f;
         Vector2 drawPosition = NPC.Center - screenPos;
 
-        // Paleta imponente de tempestade final: violeta tempestuoso profundo mesclado com ciano elétrico
+        // Tonalidade vermelha intensa e pulsante
         float pulse = (float)Math.Sin(Main.GlobalTimeWrappedHourly * 4f) * 0.15f;
-        Color stormTint = new Color(
-            (byte)(120 + pulse * 40f),
-            (byte)(80 + pulse * 30f),
-            (byte)(220 + pulse * 20f)
+        Color redTint = new Color(
+            (byte)(240 + pulse * 15f),
+            (byte)(25 + pulse * 10f),
+            (byte)(35 + pulse * 10f)
         );
 
-        Color finalColor = NPC.GetAlpha(stormTint * 0.95f);
+        Color finalColor = NPC.GetAlpha(redTint * 0.95f);
 
-        // Desenha 7 camadas sobrepostas para dar escala e profundidade gigantesca à tempestade
+        // Desenha 7 camadas sobrepostas para dar densidade, profundidade e escala gigantesca ao tornado
         for (int i = 0; i < 7; i++)
         {
             float verticalOffset = (i - 3f) * 55f;
-            float scaleX = 2.4f + (float)Math.Sin(Main.GlobalTimeWrappedHourly * 3f + i) * 0.2f;
-            float scaleY = 1.35f;
+            float scaleX = 4.2f + (float)Math.Sin(Main.GlobalTimeWrappedHourly * 3f + i) * 0.35f;
+            float scaleY = 1.6f;
 
             spriteBatch.Draw(
                 texture,
@@ -544,28 +617,31 @@ public class ThornStormBoss : ModNPC
             NPC.Center
         );
 
-        // Grande explosão de partículas de água e tempestade
+        // Grande explosão de partículas carmesim e tempestade
         for (int i = 0; i < 60; i++)
         {
             Vector2 velocity = Main.rand.NextVector2Circular(9f, 9f);
             Dust.NewDustPerfect(
                 NPC.Center,
-                DustID.Electric,
+                DustID.CrimsonTorch,
                 velocity,
                 100,
                 default,
-                Main.rand.NextFloat(1.3f, 2.0f)
+                Main.rand.NextFloat(1.4f, 2.2f)
             );
 
             Dust.NewDustPerfect(
                 NPC.Center,
-                DustID.Water,
+                DustID.Blood,
                 velocity * 0.8f,
                 100,
                 default,
                 Main.rand.NextFloat(1.2f, 1.8f)
             );
         }
+
+        // Drop garantido (100%) da recompensa do evento: Poder do Dragão
+        Item.NewItem(NPC.GetSource_Loot(), NPC.getRect(), ModContent.ItemType<DragonPower>());
 
         // Notifica o sistema do evento sobre a vitória
         ThornStormEventSystem.OnBossDefeated();

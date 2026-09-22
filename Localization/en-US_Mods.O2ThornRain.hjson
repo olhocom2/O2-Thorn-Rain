@@ -1,7 +1,28 @@
 Projectiles: {
 	SpikesProjectile.DisplayName: Spikes Projectile
 	ThornTornadoProjectile.DisplayName: Thorn Tornado
+	ThornDragonProjectile.DisplayName: Thorn Dragon
 }
+
+Items: {
+	DragonPower: {
+		DisplayName: Power of the Dragon
+		Tooltip:
+			'''
+			Summons a powerful storm dragon mount
+			Grants free flight and immunity to Thorn Rain spikes while mounted
+			'''
+	}
+}
+
+Buffs: {
+	DragonMountBuff: {
+		DisplayName: Storm Dragon
+		Description: You ride the tempest. Immune to Thorn Rain spikes!
+	}
+}
+
+Mounts.DragonMount.DisplayName: Storm Dragon
 
 NPCs: {
 	ThornStormSummonTornado.DisplayName: Abyssal Mini Vortex

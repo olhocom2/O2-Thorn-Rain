@@ -5,6 +5,7 @@ using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
 using O2ThornRain.Common.GlobalItems;
 using O2ThornRain.Common.Systems;
+using O2ThornRain.Content.Mounts;
 using O2ThornRain.Content.Projectiles;
 
 namespace O2ThornRain.Common.Players;
@@ -59,9 +60,15 @@ public class ThornRainPlayer : ModPlayer
     }
 
     /// <summary>
+    /// Prioridade 3: Montaria "Poder do Dragão" ativa concede imunidade permanente contra SpikesProjectile.
+    /// </summary>
+    public bool HasDragonMountProtection =>
+        Player.mount != null && Player.mount.Active && Player.mount.Type == ModContent.MountType<DragonMount>();
+
+    /// <summary>
     /// Indica se o jogador possui qualquer proteção ativa contra os espinhos.
     /// </summary>
-    public bool IsProtectedFromSpikes => HasIronskinProtection || HasUmbrellaProtection;
+    public bool IsProtectedFromSpikes => HasIronskinProtection || HasUmbrellaProtection || HasDragonMountProtection;
 
     // =========================================================
     // ITENS INICIAIS E PERSISTÊNCIA
