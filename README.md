@@ -9,10 +9,11 @@
 
 ---
 
-## 🎮 Gameplay Preview
+## 🎮 Gameplay & Protection Preview
 
 <p align="center">
-  <img src="assets/thornRain.gif" alt="O2 Thorn Rain Gameplay Preview" width="700px" />
+  <img src="assets/thornRain.gif" alt="O2 Thorn Rain Hazard Preview" width="49%" />
+  <img src="assets/umbrella.gif" alt="O2 Thorn Rain Umbrella Protection Preview" width="49%" />
 </p>
 
 ---
@@ -20,13 +21,34 @@
 ## 🎯 Features
 
 - 🌧️ **Dynamic Thorn Rain:** Whenever it rains in your Terraria world, thorns rain down over exposed surface areas.
-- 💨 **Wind-Influenced Physics:** Falling spikes dynamically respond to the world's real-time wind speed (`Main.windSpeedCurrent`).
+- 💨 **Wind-Influenced Physics:** Falling spikes dynamically drift based on the world's real-time wind speed (`Main.windSpeedCurrent`).
+- 📈 **Progressive Hazard Damage:** Spike damage scales dynamically across world progression (Pre-Hardmode, Hardmode, Post-Plantera, Post-Golem, and Post-Moon Lord) and difficulty modes (Normal, Expert, Master).
 - 🛡️ **Underground Exemption:** Deep caves, underground caverns, and submerged shelters remain safe—spikes only spawn in surface and sky zones (`ZoneOverworldHeight`, `ZoneSkyHeight`).
 - ⚡ **Optimized Performance:**
   - Spawn cadence controlled via tick throttling.
-  - Strict global active projectile cap (`MaxActiveSpikes = 35`) preventing frame drops and FPS stuttering.
+  - Strict global active projectile cap (`MaxGlobalSpikes = 120`) and localized per-player caps (`MaxSpikesPerPlayer = 70`) preventing frame drops.
   - Solid collision validation before instantiating projectiles to prevent wasted entity allocations.
-- 🌐 **Multiplayer Compatible:** Spawn logic is server-authoritative (`Main.netMode != NetmodeID.MultiplayerClient`), ensuring synchronized behavior across all connected players.
+- 🌐 **Multiplayer Compatible:** Spawn logic, loot drops, and equipment sync are server-authoritative, ensuring smooth synchronized behavior without item duplication.
+
+---
+
+## ☂️ Protection & Survival Mechanics
+
+Surviving the Thorn Rain requires preparation! Utilize vanilla tools and potions to brave the storm:
+
+- ☂️ **Vanilla Umbrella Protection:**
+  - Holding an open vanilla Umbrella (`ItemID.Umbrella`) protects you completely from falling spike damage.
+  - **Exposure-Based Durability:** Features a dedicated durability meter (100% to 0%). Durability decays only when actively exposed to the storm with spikes threatening nearby (1 point lost every 0.5s of exposure).
+  - **Visual Durability Bar & Tooltips:** Shows an in-game durability bar directly in your inventory slot and categorized states:
+    - **Novo / New:** 100% – 50%
+    - **Danificado / Damaged:** 49% – 15%
+    - **Quase Quebrado / Almost Broken:** 14% – 1%
+    - **Quebrado / Broken:** 0% (Protection disabled until repaired/replaced)
+- 🧪 **Ironskin Potion Immunity (Priority 1):**
+  - Drinking an Ironskin Potion (`BuffID.Ironskin`) provides **absolute immunity** to Thorn Rain damage while active.
+  - While Ironskin is active, your equipped Umbrella suffers **no durability loss**.
+- 💧 **Umbrella Slime Drop:**
+  - Vanilla Umbrella Slimes (`NPCID.UmbrellaSlime`) now have a **5% chance** to drop the vanilla Umbrella upon defeat.
 
 ---
 
@@ -35,13 +57,20 @@
 ```
 O2ThornRain/
 ├── assets/
-│   └── thornRain.gif                # Gameplay showcase animation
+│   ├── thornRain.gif                # Hazard gameplay showcase animation
+│   └── umbrella.gif                 # Umbrella protection & durability showcase animation
 ├── Common/
+│   ├── GlobalItems/
+│   │   └── UmbrellaGlobalItem.cs    # Umbrella durability, inventory bar, tooltips & network sync
+│   ├── GlobalNPCs/
+│   │   └── UmbrellaSlimeGlobalNPC.cs # Umbrella Slime loot table injection (5% drop)
+│   ├── Players/
+│   │   └── ThornRainPlayer.cs       # Player protection priorities, exposure tracking & durability decay
 │   └── Systems/
-│       └── SpikeRainSystem.cs       # World update hooks, wind physics, spawn regulation
+│       └── SpikeRainSystem.cs       # World update hooks, wind physics, progressive damage & spawn regulation
 ├── Content/
 │   └── Projectiles/
-│       ├── SpikesProjectile.cs     # Spike projectile behavior, damage, lifetime
+│       ├── SpikesProjectile.cs     # Spike projectile behavior, hit protection hook & lifetime
 │       └── SpikesProjectile.png    # Sprite asset
 ├── Localization/
 │   ├── en-US_Mods.O2ThornRain.hjson # English strings
@@ -58,6 +87,7 @@ O2ThornRain/
 ├── COMMIT_CONVENTION.md             # Conventional commit standards
 └── README.md                        # Documentation
 ```
+
 
 ---
 

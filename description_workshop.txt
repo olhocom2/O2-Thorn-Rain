@@ -4,11 +4,28 @@
 
 [h2]Features[/h2]
 [list]
-[*] [b]Atmospheric Hazard:[/b] Raining thorns fall from above during storm events.
+[*] [b]Atmospheric Hazard:[/b] Raining thorns fall continuously from the sky during storms.
 [*] [b]Dynamic Trajectory:[/b] Spike trajectories drift realistically based on the world's current wind speed.
-[*] [b]Surface Protection Check:[/b] Spikes only drop on surface and sky layers, sparing underground explorers and caves.
-[*] [b]Engine Optimization:[/b] Built-in spawn pacing and global active projectile caps keep your frame rate smooth and lag-free.
-[*] [b]Multiplayer Friendly:[/b] Server-authoritative logic avoids desyncs on dedicated and host & play servers.
+[*] [b]Progressive Hazard Damage:[/b] Spike damage scales dynamically across world progression (Pre-Hardmode, Hardmode, Post-Plantera, Post-Golem, and Post-Moon Lord) across Normal, Expert, and Master modes.
+[*] [b]Surface Protection Check:[/b] Spikes only drop on surface and sky layers, sparing underground explorers and caverns.
+[*] [b]Engine Optimization:[/b] Built-in spawn pacing and global/per-player active projectile caps keep your frame rate smooth and lag-free.
+[*] [b]Multiplayer Friendly:[/b] Server-authoritative logic prevents desyncs and item duplication on dedicated and host & play servers.
+[/list]
+
+[h2]Protection & Survival Mechanics[/h2]
+Surviving the Thorn Rain requires preparation! Utilize vanilla tools and potions to brave the storm:
+
+[list]
+[*] [b]Vanilla Umbrella Protection:[/b]
+Holding an open vanilla Umbrella ([i]ItemID.Umbrella[/i]) shields you completely from falling thorn damage!
+[*] [b]Umbrella Durability System:[/b]
+The Umbrella now features an exposure-based durability meter (100% to 0%). It gradually wears down while exposed to the Thorn Rain with active spikes nearby, losing 1 point every 0.5 seconds of exposure.
+[*] [b]Visual Durability Bar & Tooltips:[/b]
+Inspect your Umbrella to view its status: New (100%-50%), Damaged (49%-15%), Almost Broken (14%-1%), and Broken (0%). A visual durability bar is rendered directly in your inventory slot!
+[*] [b]Umbrella Slime Drop:[/b]
+Need an Umbrella? Vanilla Umbrella Slimes now have a 5% chance to drop the vanilla Umbrella upon defeat!
+[*] [b]Ironskin Potion Immunity:[/b]
+Drinking an Ironskin Potion grants absolute immunity to Thorn Rain damage while the buff is active (and spares your Umbrella from losing durability)!
 [/list]
 
 [h2]Credits[/h2]
