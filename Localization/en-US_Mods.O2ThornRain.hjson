@@ -3,9 +3,28 @@ Projectiles: {
 	ThornTornadoProjectile.DisplayName: Thorn Tornado
 }
 
+NPCs: {
+	ThornStormSummonTornado.DisplayName: Abyssal Mini Vortex
+	ThornBiomeTornado.DisplayName: Ancestral Thorn Tornado
+	ThornStormBoss.DisplayName: Eye of the Thorn Storm
+}
+
+Biomes: {
+	Jungle: Jungle
+	Snow: Snow
+	Desert: Desert
+	Corruption: Corruption
+}
+
 Events: {
 	TornadoWarning: A tornado threat has been spotted nearby...
 	TornadoIncoming: A thorn tornado is approaching!
 	RainIntensifying: The thorn rain is growing more intense...
 	StormApproaching: A thorn storm is approaching!
+	MiniTornadoSpawned: A mysterious vortex has emerged in the ocean depths...
+	StormOfFourStarted: The Storm of Four has awakened! Four ancestral tornadoes have emerged across the world!
+	TornadoDefeated: The {0} Thorn Tornado has been silenced! ({1}/4)
+	AllFourDefeated: The four winds have fallen silent...
+	FinalStormIncoming: Something colossal is approaching through the storm...
+	FinalStormVictory: The final storm has dissipated... Calm returns to the world.
 }

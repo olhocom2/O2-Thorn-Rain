@@ -3,9 +3,28 @@ Projectiles: {
 	ThornTornadoProjectile.DisplayName: Tornado de Espinhos
 }
 
+NPCs: {
+	ThornStormSummonTornado.DisplayName: Pequeno Vórtice Abissal
+	ThornBiomeTornado.DisplayName: Tornado de Espinhos Ancestral
+	ThornStormBoss.DisplayName: O Olho da Tempestade de Espinhos
+}
+
+Biomes: {
+	Jungle: Selva
+	Snow: Neve
+	Desert: Deserto
+	Corruption: Corrupção
+}
+
 Events: {
 	TornadoWarning: Uma ameaça de tornado foi avistada aos arredores...
 	TornadoIncoming: Um tornado de espinhos se aproxima!
 	RainIntensifying: A chuva de espinhos está ficando mais intensa...
 	StormApproaching: Uma tempestade de espinhos se aproxima!
+	MiniTornadoSpawned: Um vórtice misterioso surgiu nas profundezas do oceano...
+	StormOfFourStarted: A Tempestade dos Quatro despertou! Quatro tornados ancestrais surgiram pelo mundo!
+	TornadoDefeated: O Tornado de Espinhos da {0} foi silenciado! ({1}/4)
+	AllFourDefeated: Os quatro ventos foram silenciados...
+	FinalStormIncoming: Algo gigantesco se aproxima da tempestade...
+	FinalStormVictory: A tempestade final se dissipou... A calmaria retorna ao mundo.
 }

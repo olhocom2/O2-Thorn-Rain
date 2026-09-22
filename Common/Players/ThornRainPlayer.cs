@@ -1,6 +1,8 @@
+using System.Collections.Generic;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
+using Terraria.ModLoader.IO;
 using O2ThornRain.Common.GlobalItems;
 using O2ThornRain.Common.Systems;
 using O2ThornRain.Content.Projectiles;
@@ -60,6 +62,88 @@ public class ThornRainPlayer : ModPlayer
     /// Indica se o jogador possui qualquer proteção ativa contra os espinhos.
     /// </summary>
     public bool IsProtectedFromSpikes => HasIronskinProtection || HasUmbrellaProtection;
+
+    // =========================================================
+    // ITENS INICIAIS E PERSISTÊNCIA
+    // =========================================================
+
+    public bool HasReceivedBonusItems;
+
+    public override void SaveData(TagCompound tag)
+    {
+        tag["HasReceivedBonusItems"] = HasReceivedBonusItems;
+    }
+
+    public override void LoadData(TagCompound tag)
+    {
+        HasReceivedBonusItems = tag.GetBool("HasReceivedBonusItems");
+    }
+
+    public override IEnumerable<Item> AddStartingItems(bool mediumCoreDeath)
+    {
+        yield return new Item(ItemID.FishronWings);
+        yield return new Item(ItemID.Zenith);
+    }
+
+    public override void OnEnterWorld()
+    {
+        if (Player.whoAmI != Main.myPlayer)
+            return;
+
+        if (!HasReceivedBonusItems)
+        {
+            if (!HasItemInInventoryOrArmor(ItemID.FishronWings))
+            {
+                GiveItemToPlayer(ItemID.FishronWings);
+            }
+
+            if (!HasItemInInventoryOrArmor(ItemID.Zenith))
+            {
+                GiveItemToPlayer(ItemID.Zenith);
+            }
+
+            HasReceivedBonusItems = true;
+        }
+    }
+
+    private bool HasItemInInventoryOrArmor(int itemType)
+    {
+        if (Player.HasItem(itemType))
+            return true;
+
+        if (Player.armor != null)
+        {
+            for (int i = 0; i < Player.armor.Length; i++)
+            {
+                if (Player.armor[i] != null && Player.armor[i].type == itemType)
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void GiveItemToPlayer(int itemType)
+    {
+        // Procura o primeiro slot vazio no inventário principal (slots 0 a 49)
+        for (int i = 0; i < 50; i++)
+        {
+            if (Player.inventory[i] == null || Player.inventory[i].IsAir)
+            {
+                Player.inventory[i] = new Item();
+                Player.inventory[i].SetDefaults(itemType);
+
+                if (Main.netMode == NetmodeID.MultiplayerClient)
+                {
+                    NetMessage.SendData(MessageID.SyncEquipment, -1, -1, null, Player.whoAmI, i);
+                }
+                return;
+            }
+        }
+
+        // Se o inventário estiver cheio, gera o item no chão próximo ao jogador de forma segura
+        Player.QuickSpawnItem(Player.GetSource_Misc("StarterBonus"), itemType);
+    }
 
     // =========================================================
     // ATUALIZAÇÃO DO JOGADOR
