@@ -1,4 +1,9 @@
+using System.Linq;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using ReLogic.Content;
 using Terraria;
+using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
 using O2ThornRain.Content.Buffs;
@@ -28,14 +33,63 @@ public class DragonMount : ModMount
         MountData.jumpHeight = 12;
         MountData.jumpSpeed = 8f;
         MountData.blockExtraJumps = true;
+        MountData.usesHover = true;
 
         MountData.spawnDust = DustID.CrimsonTorch;
 
-        // Herda a configuração de frames e textura do CuteFishron como fallback seguro
+        // Configuração de frames e animação (evita DivideByZeroException no Mount.Draw)
+        MountData.totalFrames = 23;
+        MountData.playerYOffsets = Enumerable.Repeat(12, MountData.totalFrames).ToArray();
+        MountData.xOffset = 2;
+        MountData.yOffset = 16;
+        MountData.playerXOffset = 0;
+        MountData.playerHeadOffset = 16;
+        MountData.bodyFrame = 3;
+
+        MountData.standingFrameCount = 1;
+        MountData.standingFrameDelay = 12;
+        MountData.standingFrameStart = 8;
+
+        MountData.runningFrameCount = 7;
+        MountData.runningFrameDelay = 14;
+        MountData.runningFrameStart = 8;
+
+        MountData.flyingFrameCount = 8;
+        MountData.flyingFrameDelay = 16;
+        MountData.flyingFrameStart = 0;
+
+        MountData.inAirFrameCount = 8;
+        MountData.inAirFrameDelay = 6;
+        MountData.inAirFrameStart = 0;
+
+        MountData.idleFrameCount = 0;
+        MountData.idleFrameDelay = 0;
+        MountData.idleFrameStart = 0;
+        MountData.idleFrameLoop = false;
+
+        MountData.swimFrameCount = 8;
+        MountData.swimFrameDelay = 4;
+        MountData.swimFrameStart = 15;
+
+        MountData.dashingFrameCount = 0;
+        MountData.dashingFrameDelay = 0;
+        MountData.dashingFrameStart = 0;
+
+        // Dimensões base seguras caso os assets ainda não tenham sido medidos
+        MountData.textureWidth = 80;
+        MountData.textureHeight = 80 * MountData.totalFrames;
+
+        // Herda texturas e propriedades do CuteFishron como fallback seguro
         // até que um sprite dedicado de dragão seja adicionado pelo criador
-        if (Mount.mounts != null && Mount.mounts[MountID.CuteFishron] != null)
+        if (Mount.mounts != null && Mount.mounts.Length > MountID.CuteFishron && Mount.mounts[MountID.CuteFishron] != null)
         {
             Mount.MountData baseMount = Mount.mounts[MountID.CuteFishron];
+            if (baseMount.totalFrames > 0)
+                MountData.totalFrames = baseMount.totalFrames;
+
+            if (baseMount.playerYOffsets != null && baseMount.playerYOffsets.Length >= MountData.totalFrames)
+                MountData.playerYOffsets = (int[])baseMount.playerYOffsets.Clone();
+
             MountData.backTexture = baseMount.backTexture;
             MountData.backTextureGlow = baseMount.backTextureGlow;
             MountData.backTextureExtra = baseMount.backTextureExtra;
@@ -43,12 +97,16 @@ public class DragonMount : ModMount
             MountData.frontTextureGlow = baseMount.frontTextureGlow;
             MountData.frontTextureExtra = baseMount.frontTextureExtra;
 
-            MountData.textureWidth = baseMount.textureWidth;
-            MountData.textureHeight = baseMount.textureHeight;
+            if (baseMount.textureWidth > 0)
+                MountData.textureWidth = baseMount.textureWidth;
+            if (baseMount.textureHeight > 0)
+                MountData.textureHeight = baseMount.textureHeight;
+
             MountData.xOffset = baseMount.xOffset;
             MountData.yOffset = baseMount.yOffset;
             MountData.playerXOffset = baseMount.playerXOffset;
-            MountData.playerYOffsets = baseMount.playerYOffsets;
+            MountData.playerHeadOffset = baseMount.playerHeadOffset;
+            MountData.bodyFrame = baseMount.bodyFrame;
 
             MountData.standingFrameCount = baseMount.standingFrameCount;
             MountData.standingFrameDelay = baseMount.standingFrameDelay;
@@ -79,6 +137,57 @@ public class DragonMount : ModMount
             MountData.dashingFrameDelay = baseMount.dashingFrameDelay;
             MountData.dashingFrameStart = baseMount.dashingFrameStart;
         }
+
+        if (!Main.dedServ)
+        {
+            if (MountData.backTexture == null || MountData.backTexture == Asset<Texture2D>.Empty)
+            {
+                if (TextureAssets.CuteFishronMount != null && TextureAssets.CuteFishronMount.Length > 0)
+                {
+                    MountData.backTexture = TextureAssets.CuteFishronMount[0];
+                    if (TextureAssets.CuteFishronMount.Length > 1)
+                        MountData.backTextureGlow = TextureAssets.CuteFishronMount[1];
+                }
+            }
+
+            if (MountData.backTexture != null && MountData.backTexture.IsLoaded)
+            {
+                MountData.textureWidth = MountData.backTexture.Width();
+                MountData.textureHeight = MountData.backTexture.Height();
+            }
+        }
+    }
+
+    public override void SetMount(Player player, ref bool skipDust)
+    {
+        // Garante que no momento da ativação em jogo as texturas e dimensões estejam válidas
+        if (!Main.dedServ)
+        {
+            if (MountData.backTexture == null || MountData.backTexture == Asset<Texture2D>.Empty)
+            {
+                if (TextureAssets.CuteFishronMount != null && TextureAssets.CuteFishronMount.Length > 0)
+                {
+                    MountData.backTexture = TextureAssets.CuteFishronMount[0];
+                    if (TextureAssets.CuteFishronMount.Length > 1)
+                        MountData.backTextureGlow = TextureAssets.CuteFishronMount[1];
+                }
+            }
+
+            if (MountData.backTexture != null && MountData.backTexture.IsLoaded)
+            {
+                if (MountData.textureWidth <= 0)
+                    MountData.textureWidth = MountData.backTexture.Width();
+                if (MountData.textureHeight <= 0)
+                    MountData.textureHeight = MountData.backTexture.Height();
+            }
+
+            if (MountData.totalFrames <= 0)
+                MountData.totalFrames = 23;
+            if (MountData.textureWidth <= 0)
+                MountData.textureWidth = 80;
+            if (MountData.textureHeight <= 0)
+                MountData.textureHeight = 80 * MountData.totalFrames;
+        }
     }
 
     public override void UpdateEffects(Player player)
@@ -101,3 +210,4 @@ public class DragonMount : ModMount
         }
     }
 }
+

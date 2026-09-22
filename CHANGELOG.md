@@ -27,6 +27,12 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
   - Animação cíclica fluida com velocidade dinâmica adaptada à agressividade de cada fase.
   - Renderização customizada em `PreDraw` com auras pulsantes, trilhas de sombras/afterimages em alta velocidade e alinhamento preciso do centro geométrico do olho do furacão.
 
+### Corrigido
+- **Crash ao Usar a Montaria (`DragonMount` / `DivideByZeroException`):**
+  - Corrigido o crash do motor (`System.DivideByZeroException` em `Terraria.Mount.Draw`) disparado ao ativar a montaria com a Adaga de Espinhos (`DragonPower`).
+  - Causa raiz: `MountData.totalFrames` não era definido na inicialização, permanecendo em `0` e provocando divisão por zero no cálculo da altura de quadro (`textureHeight / totalFrames`).
+  - Inicialização explícita e segura de `MountData.totalFrames` (23 quadros), `MountData.playerYOffsets`, offsets de jogador e dimensões de textura padrão, além de vinculação direta com fallback de texturas do `CuteFishron` em `SetStaticDefaults` e `SetMount`.
+
 ---
 
 ## [0.2.0] - 2026-09-22
