@@ -11,14 +11,10 @@ namespace O2ThornRain.Content.Items;
 /// </summary>
 public class DragonPower : ModItem
 {
-    // Reutiliza o sprite da Scaly Truffle do vanilla como fallback visual seguro
-    public override string Texture =>
-        $"Terraria/Images/Item_{ItemID.ScalyTruffle}";
-
     public override void SetDefaults()
     {
-        Item.width = 34;
-        Item.height = 34;
+        Item.width = 46;
+        Item.height = 46;
         Item.useTime = 20;
         Item.useAnimation = 20;
         Item.useStyle = ItemUseStyleID.HoldUp;
@@ -26,6 +22,7 @@ public class DragonPower : ModItem
         Item.rare = ItemRarityID.Cyan;
         Item.UseSound = SoundID.Item122;
         Item.noMelee = true;
+        Item.scale = 0.4f;
 
         Item.mountType = ModContent.MountType<DragonMount>();
     }

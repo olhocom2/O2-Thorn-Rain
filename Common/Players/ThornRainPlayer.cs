@@ -5,6 +5,7 @@ using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
 using O2ThornRain.Common.GlobalItems;
 using O2ThornRain.Common.Systems;
+using O2ThornRain.Content.Items;
 using O2ThornRain.Content.Mounts;
 using O2ThornRain.Content.Projectiles;
 
@@ -90,6 +91,7 @@ public class ThornRainPlayer : ModPlayer
     {
         yield return new Item(ItemID.FishronWings);
         yield return new Item(ItemID.Zenith);
+        yield return new Item(ModContent.ItemType<LightningRod>(), 20);
     }
 
     public override void OnEnterWorld()
@@ -110,6 +112,16 @@ public class ThornRainPlayer : ModPlayer
             }
 
             HasReceivedBonusItems = true;
+        }
+
+        // Facilidade de teste: se o jogador não tiver nenhum LightningRod no inventário, concede 20 unidades
+        if (!Player.HasItem(ModContent.ItemType<LightningRod>()))
+        {
+            Player.QuickSpawnItem(Player.GetSource_Misc("TestSetup"), ModContent.ItemType<LightningRod>(), 20);
+            Main.NewText(
+                "⚡ [O2ThornRain] Foram adicionados 20x Para-raios da Tempestade ao seu inventário para facilitar os testes!",
+                255, 215, 0
+            );
         }
     }
 

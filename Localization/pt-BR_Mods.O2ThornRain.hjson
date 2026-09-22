@@ -6,11 +6,22 @@ Projectiles: {
 
 Items: {
 	DragonPower: {
-		DisplayName: Poder do Dragão
+		DisplayName: Adaga de Espinhos
 		Tooltip:
 			'''
+			Uma adaga ancestral imbuída com o poder tempestuoso dos espinhos
 			Invoca uma poderosa montaria de dragão da tempestade
 			Concede voo livre e imunidade aos espinhos da Thorn Rain enquanto montado
+			'''
+	}
+
+	LightningRod: {
+		DisplayName: Para-raios da Tempestade
+		Tooltip:
+			'''
+			Atrai a fúria dos quatro ventos ancestrais
+			Invoca o evento "A Tempestade dos Quatro"
+			Não pode ser usado se o evento já estiver em andamento
 			'''
 	}
 }

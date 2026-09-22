@@ -6,11 +6,22 @@ Projectiles: {
 
 Items: {
 	DragonPower: {
-		DisplayName: Power of the Dragon
+		DisplayName: Spike Dagger
 		Tooltip:
 			'''
+			An ancestral dagger imbued with tempestuous thorn power
 			Summons a powerful storm dragon mount
 			Grants free flight and immunity to Thorn Rain spikes while mounted
+			'''
+	}
+
+	LightningRod: {
+		DisplayName: Storm Lightning Rod
+		Tooltip:
+			'''
+			Channels the wrath of the four ancestral winds
+			Summons "The Storm of Four" event
+			Cannot be used if the event is already active
 			'''
 	}
 }

@@ -1,4 +1,6 @@
 using System.IO;
+using Terraria;
+using Terraria.ID;
 using Terraria.ModLoader;
 using O2ThornRain.Common.Systems;
 
@@ -7,7 +9,8 @@ namespace O2ThornRain;
 public enum MessageType : byte
 {
     SyncThornRainIntensity,
-    SyncThornStormEventState
+    SyncThornStormEventState,
+    RequestStartThornStormEvent
 }
 
 public class O2ThornRain : Mod
@@ -30,6 +33,13 @@ public class O2ThornRain : Mod
                 bool desert = reader.ReadBoolean();
                 bool corruption = reader.ReadBoolean();
                 ThornStormEventSystem.SetStateFromNet(state, jungle, snow, desert, corruption);
+                break;
+
+            case MessageType.RequestStartThornStormEvent:
+                if (Main.netMode == NetmodeID.Server && ThornStormEventSystem.CurrentState == ThornStormEventState.Inactive)
+                {
+                    ThornStormEventSystem.StartEvent();
+                }
                 break;
         }
     }

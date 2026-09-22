@@ -7,6 +7,28 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [0.3.0] - 2026-09-22
+
+### Adicionado
+- **Item de Invocação do Evento (`LightningRod` - Para-raios da Tempestade):**
+  - Item consumível que permite invocar "A Tempestade dos Quatro" a qualquer momento, desde que o evento não esteja ativo.
+  - Arte dedicada e recortada a partir de `lightning-rod.png`.
+  - Suporte completo a rede (multiplayer) com validação e sincronização autoritativa pelo servidor.
+  - Receita acessível para testes (1x Bloco de Terra -> 5x Para-raios).
+  - Distribuição automática de 20x unidades no inventário ao entrar no mundo ou ao criar um novo personagem para facilitar testes.
+- **Arte da Adaga de Espinhos (`DragonPower`):**
+  - Integração do sprite dedicado a partir de `spike-dagger.png`, substituindo o antigo fallback de Scaly Truffle.
+  - Textos e descrições localizados em pt-BR e en-US como "Adaga de Espinhos" / "Spike Dagger".
+- **Sprites e Animações das 3 Fases do Boss Final (`ThornStormBoss`):**
+  - Conversão das artes originais em grade 4×2 para folhas de sprites verticais padronizadas de 8 frames (168×1344 px) para cada fase:
+    - Fase 1: `ThornStormBoss.png`
+    - Fase 2: `ThornStormBoss_Phase2.png`
+    - Fase 3: `ThornStormBoss_Phase3.png`
+  - Animação cíclica fluida com velocidade dinâmica adaptada à agressividade de cada fase.
+  - Renderização customizada em `PreDraw` com auras pulsantes, trilhas de sombras/afterimages em alta velocidade e alinhamento preciso do centro geométrico do olho do furacão.
+
+---
+
 ## [0.2.0] - 2026-09-22
 
 ### Adicionado

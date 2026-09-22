@@ -20,12 +20,8 @@ namespace O2ThornRain.Content.NPCs;
 /// </summary>
 public class ThornStormBoss : ModNPC
 {
-    // Reutiliza o sprite do tornado pet (Tempest) do Duke Fishron
-    public override string Texture =>
-        $"Terraria/Images/Projectile_{ProjectileID.Tempest}";
-
-    private const int FrameCount = 6;
-    private const int AnimationSpeed = 3;
+    private const int FrameCount = 8;
+    private int _frameIndex;
 
     // Fases de combate
     public enum BossPhase
@@ -62,6 +58,8 @@ public class ThornStormBoss : ModNPC
 
         NPCID.Sets.BossBestiaryPriority.Add(Type);
         NPCID.Sets.MPAllowedEnemies[Type] = true;
+        NPCID.Sets.TrailCacheLength[Type] = 6;
+        NPCID.Sets.TrailingMode[Type] = 1;
 
         NPCID.Sets.NPCBestiaryDrawModifiers drawModifiers = new()
         {
@@ -72,8 +70,8 @@ public class ThornStormBoss : ModNPC
 
     public override void SetDefaults()
     {
-        NPC.width = 180;
-        NPC.height = 420;
+        NPC.width = 170;
+        NPC.height = 170;
 
         NPC.damage = 70;
         NPC.defense = 32;
@@ -134,9 +132,8 @@ public class ThornStormBoss : ModNPC
         }
 
         // -------------------------------------------------------------
-        // 2. ANIMAÇÃO DE ROTAÇÃO E PARTÍCULAS TEMPESTUOSAS
+        // 2. PARTÍCULAS TEMPESTUOSAS
         // -------------------------------------------------------------
-        UpdateAnimation();
         SpawnStormDust();
 
         // -------------------------------------------------------------
@@ -502,15 +499,26 @@ public class ThornStormBoss : ModNPC
     private void UpdateAnimation()
     {
         NPC.frameCounter++;
-        if (NPC.frameCounter >= AnimationSpeed)
+        int speed = CurrentPhase switch
+        {
+            BossPhase.Phase3_Cataclysm => 3,
+            BossPhase.Phase2_Gale => 4,
+            _ => 5
+        };
+
+        if (NPC.frameCounter >= speed)
         {
             NPC.frameCounter = 0;
-            NPC.frame.Y += NPC.height;
-            if (NPC.frame.Y >= NPC.height * FrameCount)
-            {
-                NPC.frame.Y = 0;
-            }
+            _frameIndex = (_frameIndex + 1) % FrameCount;
         }
+
+        int frameHeight = 168;
+        NPC.frame = new Rectangle(0, _frameIndex * frameHeight, 168, frameHeight);
+    }
+
+    public override void FindFrame(int frameHeight)
+    {
+        UpdateAnimation();
     }
 
     private void SpawnStormDust()
@@ -547,48 +555,84 @@ public class ThornStormBoss : ModNPC
 
     public override bool PreDraw(SpriteBatch spriteBatch, Vector2 screenPos, Color drawColor)
     {
-        // Utiliza o modelo do pet tornado (Tempest) do Duke Fishron desenhado em escala gigante e cor vermelha
-        Texture2D texture = TextureAssets.Projectile[ProjectileID.Tempest].Value;
+        Texture2D texture = CurrentPhase switch
+        {
+            BossPhase.Phase2_Gale => ModContent.Request<Texture2D>("O2ThornRain/Content/NPCs/ThornStormBoss_Phase2").Value,
+            BossPhase.Phase3_Cataclysm => ModContent.Request<Texture2D>("O2ThornRain/Content/NPCs/ThornStormBoss_Phase3").Value,
+            _ => TextureAssets.Npc[Type].Value
+        };
 
-        Rectangle frame = texture.Frame(
-            1,
-            FrameCount,
-            0,
-            (int)(NPC.frame.Y / (float)NPC.height) % FrameCount
-        );
-
+        int frameHeight = texture.Height / FrameCount;
+        Rectangle frame = new Rectangle(0, _frameIndex * frameHeight, texture.Width, frameHeight);
         Vector2 origin = frame.Size() / 2f;
         Vector2 drawPosition = NPC.Center - screenPos;
 
-        // Tonalidade vermelha intensa e pulsante
-        float pulse = (float)Math.Sin(Main.GlobalTimeWrappedHourly * 4f) * 0.15f;
-        Color redTint = new Color(
-            (byte)(240 + pulse * 15f),
-            (byte)(25 + pulse * 10f),
-            (byte)(35 + pulse * 10f)
-        );
+        // Pulso suave conforme a intensidade da tempestade
+        float pulse = (float)Math.Sin(Main.GlobalTimeWrappedHourly * 5f) * 0.12f;
+        float baseScale = 1.35f + pulse;
 
-        Color finalColor = NPC.GetAlpha(redTint * 0.95f);
-
-        // Desenha 7 camadas sobrepostas para dar densidade, profundidade e escala gigantesca ao tornado
-        for (int i = 0; i < 7; i++)
+        // Trilha de sombras e distorção de vento (afterimages) para fases 2 e 3
+        if (CurrentPhase != BossPhase.Phase1_Gathering)
         {
-            float verticalOffset = (i - 3f) * 55f;
-            float scaleX = 4.2f + (float)Math.Sin(Main.GlobalTimeWrappedHourly * 3f + i) * 0.35f;
-            float scaleY = 1.6f;
+            int trailCount = CurrentPhase == BossPhase.Phase3_Cataclysm ? 5 : 3;
+            for (int i = 1; i <= trailCount; i++)
+            {
+                Vector2 trailPos = (NPC.oldPos.Length > i && NPC.oldPos[i] != Vector2.Zero ? NPC.oldPos[i] + NPC.Size / 2f : NPC.Center) - screenPos;
+                Color trailColor = (CurrentPhase == BossPhase.Phase3_Cataclysm
+                    ? new Color(255, 40, 40, 0)
+                    : new Color(220, 80, 50, 0)) * ((trailCount - i) / (float)trailCount * 0.45f);
 
+                spriteBatch.Draw(
+                    texture,
+                    trailPos,
+                    frame,
+                    trailColor,
+                    NPC.rotation,
+                    origin,
+                    baseScale * 0.95f,
+                    SpriteEffects.None,
+                    0f
+                );
+            }
+        }
+
+        // Brilho pulsante externo (aura)
+        Color auraColor = (CurrentPhase switch
+        {
+            BossPhase.Phase3_Cataclysm => new Color(255, 30, 30, 100),
+            BossPhase.Phase2_Gale => new Color(255, 80, 40, 80),
+            _ => new Color(220, 50, 50, 60)
+        }) * (0.8f + pulse);
+
+        for (int i = 0; i < 4; i++)
+        {
+            Vector2 offset = (i * MathHelper.PiOver2).ToRotationVector2() * (3f + pulse * 4f);
             spriteBatch.Draw(
                 texture,
-                drawPosition + new Vector2(0f, verticalOffset),
+                drawPosition + offset,
                 frame,
-                finalColor,
-                (i % 2 == 0 ? 1 : -1) * Main.GlobalTimeWrappedHourly * 0.7f,
+                auraColor * 0.35f,
+                NPC.rotation,
                 origin,
-                new Vector2(scaleX, scaleY),
+                baseScale,
                 SpriteEffects.None,
                 0f
             );
         }
+
+        // Desenho principal do boss
+        Color mainColor = NPC.GetAlpha(drawColor);
+        spriteBatch.Draw(
+            texture,
+            drawPosition,
+            frame,
+            mainColor,
+            NPC.rotation,
+            origin,
+            baseScale,
+            SpriteEffects.None,
+            0f
+        );
 
         return false;
     }
