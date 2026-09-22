@@ -441,6 +441,9 @@ public class ThornTornadoSystem : ModSystem
             >();
 
 
+        int damage =
+            SpikeRainSystem.GetSpikeDamage();
+
         Projectile.NewProjectile(
             Entity.GetSource_NaturalSpawn(),
             spawnPosition,
@@ -450,8 +453,8 @@ public class ThornTornadoSystem : ModSystem
                 0f
             ),
             tornadoType,
-            0,
-            0f,
+            damage,
+            ThornTornadoProjectile.TornadoKnockback,
             Main.myPlayer,
             ai0: _chosenDirection
         );
