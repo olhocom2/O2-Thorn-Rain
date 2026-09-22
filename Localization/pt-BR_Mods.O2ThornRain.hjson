@@ -1,1 +1,9 @@
-Projectiles.SpikesProjectile.DisplayName: Espinho Pontiagudo
+Projectiles: {
+	SpikesProjectile.DisplayName: Espinho Pontiagudo
+	ThornTornadoProjectile.DisplayName: Tornado de Espinhos
+}
+
+Events: {
+	TornadoWarning: Uma ameaça de tornado foi avistada aos arredores...
+	TornadoIncoming: Um tornado de espinhos se aproxima!
+}

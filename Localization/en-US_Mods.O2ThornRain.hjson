@@ -1,1 +1,9 @@
-Projectiles.SpikesProjectile.DisplayName: Spikes Projectile
+Projectiles: {
+	SpikesProjectile.DisplayName: Spikes Projectile
+	ThornTornadoProjectile.DisplayName: Thorn Tornado
+}
+
+Events: {
+	TornadoWarning: A tornado threat has been spotted nearby...
+	TornadoIncoming: A thorn tornado is approaching!
+}

@@ -17,7 +17,7 @@ public class SpikeRainSystem : ModSystem
 
     private const int SpawnInterval = 3;
 
-    private const int MaxGlobalSpikes = 120;
+    public const int MaxGlobalSpikes = 120;
 
     private const int MaxSpikesPerPlayer = 70;
 
@@ -212,7 +212,7 @@ public class SpikeRainSystem : ModSystem
     // CÁLCULO DO DANO
     // =========================================================
 
-    private static int GetSpikeDamage()
+    public static int GetSpikeDamage()
     {
         // -----------------------------------------------------
         // PÓS-MOON LORD
