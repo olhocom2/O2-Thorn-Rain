@@ -9,6 +9,14 @@
 
 ---
 
+## 🎮 Gameplay Preview
+
+<p align="center">
+  <img src="assets/thornRain.gif" alt="O2 Thorn Rain Gameplay Preview" width="700px" />
+</p>
+
+---
+
 ## 🎯 Features
 
 - 🌧️ **Dynamic Thorn Rain:** Whenever it rains in your Terraria world, thorns rain down over exposed surface areas.
@@ -26,6 +34,8 @@
 
 ```
 O2ThornRain/
+├── assets/
+│   └── thornRain.gif                # Gameplay showcase animation
 ├── Common/
 │   └── Systems/
 │       └── SpikeRainSystem.cs       # World update hooks, wind physics, spawn regulation
