@@ -155,7 +155,7 @@ public class SpikeRainSystem : ModSystem
     // VERIFICAÇÃO DO JOGADOR
     // =========================================================
 
-    private static bool IsPlayerInRainZone(Player player)
+    public static bool IsPlayerInRainZone(Player player)
     {
         bool correctLayer =
             player.ZoneOverworldHeight ||

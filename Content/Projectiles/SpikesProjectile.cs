@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
+using O2ThornRain.Common.Players;
 
 namespace O2ThornRain.Content.Projectiles;
 
@@ -170,5 +171,20 @@ public class SpikesProjectile : ModProjectile
                 -Projectile.velocity.Y * 0.2f
             );
         }
+    }
+
+    // =========================================================
+    // PROTEÇÃO CONTRA DANO
+    // =========================================================
+
+    public override bool CanHitPlayer(Player target)
+    {
+        // Se o jogador estiver protegido por Pele de Ferro ou Guarda-chuva com durabilidade:
+        if (target.GetModPlayer<ThornRainPlayer>().IsProtectedFromSpikes)
+        {
+            return false;
+        }
+
+        return base.CanHitPlayer(target);
     }
 }
