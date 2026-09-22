@@ -15,22 +15,56 @@ public class SpikeRainSystem : ModSystem
     // CONFIGURAÇÃO DA CHUVA
     // =========================================================
 
-    // Quanto menor, mais espinhos são criados por segundo.
-    // 3 = chuva bastante intensa.
     private const int SpawnInterval = 3;
 
-    // Limite absoluto de espinhos ativos no mundo.
     private const int MaxGlobalSpikes = 120;
 
-    // Limite aproximado de espinhos por jogador.
     private const int MaxSpikesPerPlayer = 70;
 
-    // Área horizontal onde os espinhos podem nascer.
     private const float SpawnHorizontalRange = 1000f;
 
-    // Altura acima do jogador onde os espinhos aparecem.
     private const float SpawnHeightMin = 550f;
     private const float SpawnHeightMax = 800f;
+
+    // =========================================================
+    // DANO - PRÉ-HARDMODE
+    // =========================================================
+
+    private const int NormalDamagePreHardmode = 40;
+    private const int ExpertDamagePreHardmode = 60;
+    private const int MasterDamagePreHardmode = 80;
+
+    // =========================================================
+    // DANO - HARDMODE
+    // =========================================================
+
+    private const int NormalDamageHardmode = 55;
+    private const int ExpertDamageHardmode = 80;
+    private const int MasterDamageHardmode = 105;
+
+    // =========================================================
+    // DANO - PÓS-PLANTERA
+    // =========================================================
+
+    private const int NormalDamagePostPlantera = 70;
+    private const int ExpertDamagePostPlantera = 100;
+    private const int MasterDamagePostPlantera = 130;
+
+    // =========================================================
+    // DANO - PÓS-GOLEM
+    // =========================================================
+
+    private const int NormalDamagePostGolem = 85;
+    private const int ExpertDamagePostGolem = 120;
+    private const int MasterDamagePostGolem = 155;
+
+    // =========================================================
+    // DANO - PÓS-MOON LORD
+    // =========================================================
+
+    private const int NormalDamagePostMoonLord = 110;
+    private const int ExpertDamagePostMoonLord = 150;
+    private const int MasterDamagePostMoonLord = 190;
 
     // =========================================================
     // ATUALIZAÇÃO DO MUNDO
@@ -38,12 +72,11 @@ public class SpikeRainSystem : ModSystem
 
     public override void PostUpdateWorld()
     {
-        // Mantém a chuva normal do Terraria ativa.
         Main.raining = true;
         Main.rainTime = 86400;
         Main.maxRaining = 0.8f;
 
-        // No multiplayer, o servidor deve controlar os spawns.
+        // O servidor controla os spawns no multiplayer.
         if (Main.netMode == NetmodeID.MultiplayerClient)
             return;
 
@@ -54,7 +87,7 @@ public class SpikeRainSystem : ModSystem
 
         _spawnTimer = 0;
 
-        // Não cria mais se atingimos o limite global.
+        // Limite global de segurança.
         if (SpikesProjectile.ActiveCount >= MaxGlobalSpikes)
             return;
 
@@ -65,12 +98,10 @@ public class SpikeRainSystem : ModSystem
     // SISTEMA DE SPAWN
     // =========================================================
 
-    private void SpawnSpikes()
+    private static void SpawnSpikes()
     {
         int activePlayers = 0;
 
-        // Primeiro descobrimos quantos jogadores estão
-        // participando da chuva.
         for (int i = 0; i < Main.maxPlayers; i++)
         {
             Player player = Main.player[i];
@@ -87,20 +118,12 @@ public class SpikeRainSystem : ModSystem
         if (activePlayers == 0)
             return;
 
-        // Quantos espinhos ainda podemos criar?
         int remaining =
             MaxGlobalSpikes - SpikesProjectile.ActiveCount;
 
         if (remaining <= 0)
             return;
 
-        // Quantidade criada a cada ciclo.
-        //
-        // 1 jogador = até 2
-        // 2 jogadores = até 4
-        // etc.
-        //
-        // O limite global continua protegendo o desempenho.
         int spawnCount = Math.Min(
             activePlayers * 2,
             remaining
@@ -118,8 +141,6 @@ public class SpikeRainSystem : ModSystem
             if (!IsPlayerInRainZone(player))
                 continue;
 
-            // Verifica aproximadamente quantos espinhos
-            // estão próximos desse jogador.
             if (CountSpikesNearPlayer(player) >= MaxSpikesPerPlayer)
                 continue;
 
@@ -134,7 +155,7 @@ public class SpikeRainSystem : ModSystem
     // VERIFICAÇÃO DO JOGADOR
     // =========================================================
 
-    private bool IsPlayerInRainZone(Player player)
+    private static bool IsPlayerInRainZone(Player player)
     {
         bool correctLayer =
             player.ZoneOverworldHeight ||
@@ -143,7 +164,6 @@ public class SpikeRainSystem : ModSystem
         if (!correctLayer)
             return false;
 
-        // Não queremos chuva de espinhos no subterrâneo.
         if (player.position.Y / 16f > Main.worldSurface)
             return false;
 
@@ -154,19 +174,18 @@ public class SpikeRainSystem : ModSystem
     // CONTAGEM LOCAL
     // =========================================================
 
-    private int CountSpikesNearPlayer(Player player)
+    private static int CountSpikesNearPlayer(Player player)
     {
         int count = 0;
 
         const float maxDistance = 1500f;
+
         float maxDistanceSquared =
             maxDistance * maxDistance;
 
         int spikeType =
             ModContent.ProjectileType<SpikesProjectile>();
 
-        // Essa busca só acontece quando realmente precisamos
-        // decidir se podemos criar novos espinhos para esse jogador.
         for (int i = 0; i < Main.maxProjectiles; i++)
         {
             Projectile projectile = Main.projectile[i];
@@ -179,7 +198,8 @@ public class SpikeRainSystem : ModSystem
 
             if (Vector2.DistanceSquared(
                     projectile.Center,
-                    player.Center) <= maxDistanceSquared)
+                    player.Center
+                ) <= maxDistanceSquared)
             {
                 count++;
             }
@@ -189,10 +209,89 @@ public class SpikeRainSystem : ModSystem
     }
 
     // =========================================================
+    // CÁLCULO DO DANO
+    // =========================================================
+
+    private static int GetSpikeDamage()
+    {
+        // -----------------------------------------------------
+        // PÓS-MOON LORD
+        // -----------------------------------------------------
+
+        if (NPC.downedMoonlord)
+        {
+            if (Main.masterMode)
+                return MasterDamagePostMoonLord;
+
+            if (Main.expertMode)
+                return ExpertDamagePostMoonLord;
+
+            return NormalDamagePostMoonLord;
+        }
+
+        // -----------------------------------------------------
+        // PÓS-GOLEM
+        // -----------------------------------------------------
+
+        if (NPC.downedGolemBoss)
+        {
+            if (Main.masterMode)
+                return MasterDamagePostGolem;
+
+            if (Main.expertMode)
+                return ExpertDamagePostGolem;
+
+            return NormalDamagePostGolem;
+        }
+
+        // -----------------------------------------------------
+        // PÓS-PLANTERA
+        // -----------------------------------------------------
+
+        if (NPC.downedPlantBoss)
+        {
+            if (Main.masterMode)
+                return MasterDamagePostPlantera;
+
+            if (Main.expertMode)
+                return ExpertDamagePostPlantera;
+
+            return NormalDamagePostPlantera;
+        }
+
+        // -----------------------------------------------------
+        // HARDMODE
+        // -----------------------------------------------------
+
+        if (Main.hardMode)
+        {
+            if (Main.masterMode)
+                return MasterDamageHardmode;
+
+            if (Main.expertMode)
+                return ExpertDamageHardmode;
+
+            return NormalDamageHardmode;
+        }
+
+        // -----------------------------------------------------
+        // PRÉ-HARDMODE
+        // -----------------------------------------------------
+
+        if (Main.masterMode)
+            return MasterDamagePreHardmode;
+
+        if (Main.expertMode)
+            return ExpertDamagePreHardmode;
+
+        return NormalDamagePreHardmode;
+    }
+
+    // =========================================================
     // CRIAÇÃO DO ESPINHO
     // =========================================================
 
-    private bool SpawnSpike(Player player)
+    private static bool SpawnSpike(Player player)
     {
         float spawnX =
             player.Center.X +
@@ -209,9 +308,9 @@ public class SpikeRainSystem : ModSystem
             );
 
         Vector2 spawnPosition =
-            new Vector2(spawnX, spawnY);
+            new(spawnX, spawnY);
 
-        // Não nasce dentro de montanhas/blocos.
+        // Evita nascer dentro de blocos.
         if (Collision.SolidCollision(
                 spawnPosition,
                 14,
@@ -220,7 +319,7 @@ public class SpikeRainSystem : ModSystem
             return false;
         }
 
-        // Vento influencia levemente a trajetória.
+        // Vento influencia a trajetória.
         float speedX =
             Main.windSpeedCurrent * 8f +
             Main.rand.NextFloat(-1.5f, 1.5f);
@@ -229,18 +328,17 @@ public class SpikeRainSystem : ModSystem
             Main.rand.NextFloat(12f, 18f);
 
         Vector2 velocity =
-            new Vector2(speedX, speedY);
+            new(speedX, speedY);
 
         int spikeType =
             ModContent.ProjectileType<SpikesProjectile>();
 
-        // damage and more
         Projectile.NewProjectile(
             Entity.GetSource_NaturalSpawn(),
             spawnPosition,
             velocity,
             spikeType,
-            40,
+            GetSpikeDamage(),
             3.5f,
             Main.myPlayer
         );
