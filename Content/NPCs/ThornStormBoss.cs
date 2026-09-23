@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Terraria;
 using Terraria.Audio;
 using Terraria.GameContent;
+using Terraria.GameContent.ItemDropRules;
 using Terraria.ID;
 using Terraria.ModLoader;
 using O2ThornRain.Common.Systems;
@@ -640,6 +641,12 @@ public class ThornStormBoss : ModNPC
     // =========================================================================
     // MORTE E CONCLUSÃO DO EVENTO
     // =========================================================================
+
+    public override void ModifyNPCLoot(NPCLoot npcLoot)
+    {
+        // Recompensa especial do boss: Montaria do Dragão do Cultista
+        npcLoot.Add(ItemDropRule.Common(ModContent.ItemType<DragonMountItem>()));
+    }
 
     public override void OnKill()
     {

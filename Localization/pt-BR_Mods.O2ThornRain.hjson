@@ -15,6 +15,16 @@ Items: {
 			'''
 	}
 
+	DragonMountItem: {
+		DisplayName: Fúria do Dragão Celestial
+		Tooltip:
+			'''
+			Uma relíquia ancestral obtida ao subjugar o Olho da Tempestade
+			Invoca o lendário Dragão do Cultista como montaria
+			Concede voo infinito, agilidade extrema e imunidade aos espinhos da tempestade
+			'''
+	}
+
 	LightningRod: {
 		DisplayName: Para-raios da Tempestade
 		Tooltip:
@@ -28,12 +38,12 @@ Items: {
 
 Buffs: {
 	DragonMountBuff: {
-		DisplayName: Dragão da Tempestade
-		Description: Você cavalga a tempestade. Imune aos espinhos da Thorn Rain!
+		DisplayName: Dragão do Cultista
+		Description: Você cavalga o dragão celestial da tempestade. Imune aos espinhos da Thorn Rain!
 	}
 }
 
-Mounts.DragonMount.DisplayName: Dragão da Tempestade
+Mounts.DragonMount.DisplayName: Dragão do Cultista
 
 NPCs: {
 	ThornStormSummonTornado.DisplayName: Pequeno Vórtice Abissal

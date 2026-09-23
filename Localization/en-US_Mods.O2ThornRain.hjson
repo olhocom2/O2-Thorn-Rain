@@ -15,6 +15,16 @@ Items: {
 			'''
 	}
 
+	DragonMountItem: {
+		DisplayName: Wrath of the Celestial Dragon
+		Tooltip:
+			'''
+			An ancient relic obtained by subduing the Eye of the Thorn Storm
+			Summons the legendary Cultist Dragon as a mount
+			Grants infinite flight, extreme agility, and immunity to storm spikes
+			'''
+	}
+
 	LightningRod: {
 		DisplayName: Storm Lightning Rod
 		Tooltip:
@@ -28,12 +38,12 @@ Items: {
 
 Buffs: {
 	DragonMountBuff: {
-		DisplayName: Storm Dragon
-		Description: You ride the tempest. Immune to Thorn Rain spikes!
+		DisplayName: Cultist Dragon
+		Description: You ride the celestial storm dragon. Immune to Thorn Rain spikes!
 	}
 }
 
-Mounts.DragonMount.DisplayName: Storm Dragon
+Mounts.DragonMount.DisplayName: Cultist Dragon
 
 NPCs: {
 	ThornStormSummonTornado.DisplayName: Abyssal Mini Vortex

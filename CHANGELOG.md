@@ -26,6 +26,14 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
     - Fase 3: `ThornStormBoss_Phase3.png`
   - Animação cíclica fluida com velocidade dinâmica adaptada à agressividade de cada fase.
   - Renderização customizada em `PreDraw` com auras pulsantes, trilhas de sombras/afterimages em alta velocidade e alinhamento preciso do centro geométrico do olho do furacão.
+- **Montaria do Dragão do Cultista (`DragonMount` & `DragonMountItem`):**
+  - Substituição completa do fallback de Cute Fishron pela identidade visual do Dragão do Cultista (Phantasm Dragon).
+  - Textura dedicada `Content/Mounts/DragonMount.png` carregada via `ModContent.Request<Texture2D>` com folha vertical de 8 frames (120×640 px).
+  - Ciclo de animação harmonizado para repouso, corrida no solo, voo contínuo e flutuação/manobras aéreas sem risco de divisão por zero.
+  - Efeitos combinados de partículas carmesim de tempestade e centelhas etéreas cianas celestiais (`DustID.CrimsonTorch` e `DustID.Vortex`).
+  - Criação do item de invocação `DragonMountItem` sem receita comercial ou de forja.
+  - Adição do drop da montaria ao novo boss final (`ThornStormBoss`) utilizando `ModifyNPCLoot` e `ItemDropRule.Common(ModContent.ItemType<DragonMountItem>())`.
+  - Ícone de buff exclusivo `DragonMountBuff.png` (32×32) e padronização das localizações pt-BR e en-US.
 
 ### Corrigido
 - **Crash ao Usar a Montaria (`DragonMount` / `DivideByZeroException`):**

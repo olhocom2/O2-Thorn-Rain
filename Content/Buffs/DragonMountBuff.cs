@@ -1,5 +1,4 @@
 using Terraria;
-using Terraria.ID;
 using Terraria.ModLoader;
 using O2ThornRain.Content.Mounts;
 
@@ -7,14 +6,10 @@ namespace O2ThornRain.Content.Buffs;
 
 /// <summary>
 /// Buff da montaria Poder do Dragão.
-/// Concede a montaria e gerencia sua persistência.
+/// Concede a montaria do dragão celestial e gerencia sua persistência ativa.
 /// </summary>
 public class DragonMountBuff : ModBuff
 {
-    // Reutiliza o ícone do buff da montaria do Fishron do vanilla
-    public override string Texture =>
-        $"Terraria/Images/Buff_{BuffID.CuteFishronMount}";
-
     public override void SetStaticDefaults()
     {
         Main.buffNoTimeDisplay[Type] = true;
