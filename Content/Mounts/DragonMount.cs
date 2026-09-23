@@ -1,8 +1,10 @@
-using System.Linq;
+using System;
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using ReLogic.Content;
 using Terraria;
+using Terraria.DataStructures;
 using Terraria.ID;
 using Terraria.ModLoader;
 using O2ThornRain.Content.Buffs;
@@ -10,25 +12,30 @@ using O2ThornRain.Content.Buffs;
 namespace O2ThornRain.Content.Mounts;
 
 /// <summary>
-/// Montaria voadora do Dragão do Cultista concedida como recompensa máxima ao derrotar o evento "A Tempestade dos Quatro".
-/// Concede voo infinito, agilidade extrema e imunidade exclusiva aos espinhos da Thorn Rain (SpikesProjectile).
+/// Montaria voadora do Dragão Celestial do Cultista.
+/// Concede voo infinito, agilidade extrema e imunidade exclusiva aos espinhos da Thorn Rain.
+/// Utiliza folha de animação com 9 quadros de 200x100 px para um voo ondulatório contínuo e majestoso.
 /// </summary>
 public class DragonMount : ModMount
 {
+    private const int FrameWidth = 200;
+    private const int FrameHeight = 100;
+    private const int TotalFramesCount = 9;
+
     public override void SetStaticDefaults()
     {
         // Buff associado
         MountData.buff = ModContent.BuffType<DragonMountBuff>();
 
-        // Parâmetros de movimentação e voo ágil
-        MountData.flightTimeMax = int.MaxValue; // Voo infinito
+        // Parâmetros de movimentação e voo ágil infinito
+        MountData.flightTimeMax = int.MaxValue;
         MountData.fatigueMax = int.MaxValue;
         MountData.fallDamage = 0f;
         MountData.heightBoost = 20;
 
-        MountData.runSpeed = 12f;
-        MountData.dashSpeed = 12f;
-        MountData.acceleration = 0.25f;
+        MountData.runSpeed = 13f;
+        MountData.dashSpeed = 13f;
+        MountData.acceleration = 0.28f;
         MountData.jumpHeight = 12;
         MountData.jumpSpeed = 8f;
         MountData.blockExtraJumps = true;
@@ -36,56 +43,57 @@ public class DragonMount : ModMount
 
         MountData.spawnDust = DustID.CrimsonTorch;
 
-        // Animação e contagem exata de frames para a textura (8 frames)
-        MountData.totalFrames = 8;
-        MountData.playerYOffsets = new int[] { 14, 12, 10, 12, 14, 16, 14, 12 };
-        MountData.xOffset = 10;
-        MountData.yOffset = 4;
+        // Configuração precisa dos 9 quadros de animação (200x100 px cada, total 200x900 px)
+        MountData.totalFrames = TotalFramesCount;
+        MountData.textureWidth = FrameWidth;
+        MountData.textureHeight = FrameHeight * TotalFramesCount;
+
+        // Ondulação suave do jogador acompanhando a sela/dorso do dragão em voo
+        MountData.playerYOffsets = new int[] { 14, 10, 8, 18, 17, 18, 16, 14, 15 };
+        MountData.xOffset = 0;
+        MountData.yOffset = 2;
         MountData.playerXOffset = 0;
         MountData.playerHeadOffset = 18;
         MountData.bodyFrame = 3;
 
-        // Animação de repouso / parado (frames 0 a 3)
-        MountData.standingFrameCount = 4;
+        // Animação completa de voo contínuo (todos os 9 quadros)
+        MountData.flyingFrameCount = TotalFramesCount;
+        MountData.flyingFrameStart = 0;
+        MountData.flyingFrameDelay = 5;
+
+        // Animação planando no ar
+        MountData.inAirFrameCount = TotalFramesCount;
+        MountData.inAirFrameStart = 0;
+        MountData.inAirFrameDelay = 5;
+
+        // Animação repousando / flutuando no solo
+        MountData.standingFrameCount = TotalFramesCount;
         MountData.standingFrameStart = 0;
-        MountData.standingFrameDelay = 10;
+        MountData.standingFrameDelay = 7;
 
-        // Animação em movimento no solo (frames 0 a 3)
-        MountData.runningFrameCount = 4;
+        // Animação em movimento no solo
+        MountData.runningFrameCount = TotalFramesCount;
         MountData.runningFrameStart = 0;
-        MountData.runningFrameDelay = 8;
+        MountData.runningFrameDelay = 5;
 
-        // Animação de voo (frames 4 a 7)
-        MountData.flyingFrameCount = 4;
-        MountData.flyingFrameStart = 4;
-        MountData.flyingFrameDelay = 6;
-
-        // Animação no ar / planando (frames 4 a 7)
-        MountData.inAirFrameCount = 4;
-        MountData.inAirFrameStart = 4;
-        MountData.inAirFrameDelay = 6;
+        // Animação na água
+        MountData.swimFrameCount = TotalFramesCount;
+        MountData.swimFrameStart = 0;
+        MountData.swimFrameDelay = 5;
 
         MountData.idleFrameCount = 0;
         MountData.idleFrameStart = 0;
         MountData.idleFrameDelay = 0;
         MountData.idleFrameLoop = false;
 
-        MountData.swimFrameCount = 4;
-        MountData.swimFrameStart = 4;
-        MountData.swimFrameDelay = 6;
-
         MountData.dashingFrameCount = 0;
         MountData.dashingFrameStart = 0;
         MountData.dashingFrameDelay = 0;
 
-        // Dimensões da textura: folha com 8 quadros de 120x80 px cada (total 120x640 px)
-        MountData.textureWidth = 120;
-        MountData.textureHeight = 640;
-
-        // Carregamento dedicado da textura do Dragão do Cultista pelo mod
+        // Carregamento da textura do Dragão
         if (!Main.dedServ)
         {
-            MountData.backTexture = ModContent.Request<Texture2D>("O2ThornRain/Content/Mounts/DragonMount");
+            MountData.backTexture = ModContent.Request<Texture2D>("O2ThornRain/Content/Mounts/DragonMount_Back");
 
             if (MountData.backTexture != null && MountData.backTexture.IsLoaded)
             {
@@ -98,35 +106,59 @@ public class DragonMount : ModMount
     public override void SetMount(Player player, ref bool skipDust)
     {
         // Garante a integridade das dimensões e frames em tempo de execução
+        MountData.totalFrames = TotalFramesCount;
+        MountData.textureWidth = FrameWidth;
+        MountData.textureHeight = FrameHeight * TotalFramesCount;
+
+        if (MountData.playerYOffsets == null || MountData.playerYOffsets.Length < TotalFramesCount)
+        {
+            MountData.playerYOffsets = new int[] { 14, 10, 8, 18, 17, 18, 16, 14, 15 };
+        }
+
         if (!Main.dedServ)
         {
             if (MountData.backTexture == null || MountData.backTexture == Asset<Texture2D>.Empty)
             {
-                MountData.backTexture = ModContent.Request<Texture2D>("O2ThornRain/Content/Mounts/DragonMount");
+                MountData.backTexture = ModContent.Request<Texture2D>("O2ThornRain/Content/Mounts/DragonMount_Back");
             }
-
-            if (MountData.backTexture != null && MountData.backTexture.IsLoaded)
-            {
-                if (MountData.textureWidth <= 0)
-                    MountData.textureWidth = MountData.backTexture.Width();
-                if (MountData.textureHeight <= 0)
-                    MountData.textureHeight = MountData.backTexture.Height();
-            }
-
-            if (MountData.totalFrames <= 0)
-                MountData.totalFrames = 8;
-            if (MountData.playerYOffsets == null || MountData.playerYOffsets.Length < MountData.totalFrames)
-                MountData.playerYOffsets = new int[] { 14, 12, 10, 12, 14, 16, 14, 12 };
-            if (MountData.textureWidth <= 0)
-                MountData.textureWidth = 120;
-            if (MountData.textureHeight <= 0)
-                MountData.textureHeight = 640;
         }
+    }
+
+    public override bool Draw(
+        List<DrawData> playerDrawData,
+        int drawType,
+        Player drawPlayer,
+        ref Texture2D texture,
+        ref Texture2D glowTexture,
+        ref Vector2 drawPosition,
+        ref Rectangle frame,
+        ref Color drawColor,
+        ref Color glowColor,
+        ref float rotation,
+        ref SpriteEffects spriteEffects,
+        ref Vector2 drawOrigin,
+        ref float drawScale,
+        float shadow)
+    {
+        // Garante amostragem exata de 200x100 por quadro e centro de rotação simétrico
+        int frameIndex = drawPlayer.mount._frame;
+        if (frameIndex < 0 || frameIndex >= TotalFramesCount)
+            frameIndex = 0;
+
+        frame = new Rectangle(0, frameIndex * FrameHeight, FrameWidth, FrameHeight);
+        drawOrigin = new Vector2(FrameWidth / 2f, FrameHeight / 2f);
+
+        if (texture == null && MountData.backTexture != null && MountData.backTexture.IsLoaded)
+        {
+            texture = MountData.backTexture.Value;
+        }
+
+        return true;
     }
 
     public override void UpdateEffects(Player player)
     {
-        // Efeito característico de partículas de tempestade carmesim acompanhando o movimento
+        // Efeito de rastro etéreo do Dragão com fogo carmesim e partículas Vortex celestiais
         if (player.velocity.LengthSquared() > 4f && Main.rand.NextBool(2))
         {
             Dust dust = Dust.NewDustDirect(
@@ -142,7 +174,6 @@ public class DragonMount : ModMount
             );
             dust.noGravity = true;
 
-            // Partículas etéreas cianas do Dragão do Cultista
             if (Main.rand.NextBool(2))
             {
                 Dust cyanDust = Dust.NewDustDirect(

@@ -41,6 +41,20 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
   - **Fase 2 (70%–40% HP):** Perseguição ágil, rajadas diagonais cruzadas de espinhos, até 4 mini tornados e pequenos dashes aéreos telegrafados a cada 5s.
   - **Fase 3 (< 40% HP):** Movimento frenético, disparos de espinhos radiais 360° combinados com leques intensos, enxame de até 7 mini tornados velozes e dashes de alta velocidade a cada 2.6s.
 
+### Corrigido
+- **Amostragem e Animação de Voo da Montaria do Dragão (`DragonMount`):**
+  - Identificada a causa raiz da montaria aparecer quebrada/invisível: a textura bruta fornecida possuía `725x2170` px com 9 desenhos separados por intervalos verticais irregulares e orientados para a esquerda.
+  - Recortados, espelhados horizontalmente para a direita e centralizados individualmente todos os 9 quadros em uma folha uniforme de `200x100` px por quadro (total `200x900` px).
+  - Atualizada a contagem para `totalFrames = 9` e ajustada a taxa de quadros de voo (`flyingFrameDelay = 5`).
+  - Mapeamento dinâmico de `playerYOffsets = { 14, 10, 8, 18, 17, 18, 16, 14, 15 }`, fazendo o jogador acompanhar com perfeição o ritmo e a ondulação das asas do dragão em voo.
+- **Tamanho e Proporção do Item da Adaga (`DragonPower`):**
+  - Redimensionada a textura do item de `370x306` para o padrão vanilla de `24x24` pixels ([DragonPower.png](file:///Users/dhephersonribeiro/Library/Application%20Support/Terraria/tModLoader/ModSources/O2ThornRain/Content/Items/DragonPower.png)).
+  - Ajustadas as propriedades `Item.width = 24`, `Item.height = 24` e `Item.scale = 1f`, garantindo dimensões normais e idênticas a blocos e itens clássicos do Terraria tanto no inventário quanto na mão do personagem e no chão do mundo.
+- **Fluxo Exclusivo de Recompensas na Bolsa de Tesouro (`ThornStormBossBag`):**
+  - Removido o drop direto de `DragonPower` e `DragonMountItem` ao chão na morte do boss em `ThornStormBoss.cs`.
+  - A Adaga de Espinhos agora é concedida **exclusivamente após abrir a bolsa de tesouro**.
+  - O Troféu do Boss (`ThornStormBossTrophy`) agora é um drop **100% garantido** na abertura da bolsa de tesouro.
+
 ---
 
 ## [0.3.0] - 2026-09-22

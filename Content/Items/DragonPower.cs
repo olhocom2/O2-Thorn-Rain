@@ -13,8 +13,8 @@ public class DragonPower : ModItem
 {
     public override void SetDefaults()
     {
-        Item.width = 46;
-        Item.height = 46;
+        Item.width = 24;
+        Item.height = 24;
         Item.useTime = 20;
         Item.useAnimation = 20;
         Item.useStyle = ItemUseStyleID.HoldUp;
@@ -22,7 +22,7 @@ public class DragonPower : ModItem
         Item.rare = ItemRarityID.Cyan;
         Item.UseSound = SoundID.Item122;
         Item.noMelee = true;
-        Item.scale = 0.4f;
+        Item.scale = 1f;
 
         Item.mountType = ModContent.MountType<DragonMount>();
     }

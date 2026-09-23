@@ -686,11 +686,8 @@ public class ThornStormBoss : ModNPC
         notExpertRule.OnSuccess(ItemDropRule.Common(ModContent.ItemType<ThornStormBossBag>()));
         npcLoot.Add(notExpertRule);
 
-        // 2. Troféu do Boss (10% de chance de drop direto)
+        // 2. Troféu do Boss (10% de chance de drop direto no modo clássico)
         npcLoot.Add(ItemDropRule.Common(ModContent.ItemType<ThornStormBossTrophy>(), 10));
-
-        // 3. Recompensas diretas clássicas
-        npcLoot.Add(ItemDropRule.Common(ModContent.ItemType<DragonMountItem>()));
     }
 
     public override void OnKill()
@@ -736,10 +733,7 @@ public class ThornStormBoss : ModNPC
             );
         }
 
-        // Drop garantido (100%) da recompensa do evento: Poder do Dragão (Adaga de Espinhos)
-        Item.NewItem(NPC.GetSource_Loot(), NPC.getRect(), ModContent.ItemType<DragonPower>());
-
-        // Notifica o sistema do evento sobre a vitória
+        // Notifica o sistema do evento sobre a vitória (recompensas obtidas exclusivamente via Boss Bag)
         ThornStormEventSystem.OnBossDefeated();
     }
 }

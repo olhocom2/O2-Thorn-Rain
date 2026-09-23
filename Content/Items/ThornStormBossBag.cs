@@ -40,11 +40,10 @@ public class ThornStormBossBag : ModItem
         itemLoot.Add(ItemDropRule.Common(ItemID.PlatinumCoin, 1, 1, 1));
         itemLoot.Add(ItemDropRule.Common(ItemID.GoldCoin, 1, 50, 50));
 
-        // Itens de montaria do boss
-        itemLoot.Add(ItemDropRule.Common(ModContent.ItemType<DragonMountItem>()));
+        // Adaga de Espinhos (100% garantida ao abrir a bolsa)
         itemLoot.Add(ItemDropRule.Common(ModContent.ItemType<DragonPower>()));
 
-        // Chance de obter o Troféu do Boss dentro da bolsa (1 em 3)
-        itemLoot.Add(ItemDropRule.Common(ModContent.ItemType<ThornStormBossTrophy>(), 3));
+        // Troféu do Boss (100% garantido ao abrir a bolsa)
+        itemLoot.Add(ItemDropRule.Common(ModContent.ItemType<ThornStormBossTrophy>()));
     }
 }
