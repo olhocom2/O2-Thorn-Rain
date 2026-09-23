@@ -49,8 +49,14 @@ public class DragonMount : ModMount
         MountData.textureHeight = FrameHeight * TotalFramesCount;
 
         // Ondulação suave do jogador acompanhando a sela/dorso do dragão em voo
-        MountData.playerYOffsets = new int[] { 14, 10, 8, 18, 17, 18, 16, 14, 15 };
-        MountData.xOffset = 0;
+        // Valores calibrados para manter o player perfeitamente sentado no dorso sem atravessar o corpo
+        MountData.playerYOffsets = new int[]
+  {
+    20, 19, 18, 17, 16,
+    17, 18, 19, 20
+  };
+
+        MountData.xOffset = -28;
         MountData.yOffset = 2;
         MountData.playerXOffset = 0;
         MountData.playerHeadOffset = 18;
@@ -112,7 +118,7 @@ public class DragonMount : ModMount
 
         if (MountData.playerYOffsets == null || MountData.playerYOffsets.Length < TotalFramesCount)
         {
-            MountData.playerYOffsets = new int[] { 14, 10, 8, 18, 17, 18, 16, 14, 15 };
+            MountData.playerYOffsets = new int[] { -4, -3, -2, -1, 0, -1, -2, -3, -4 };
         }
 
         if (!Main.dedServ)
@@ -147,6 +153,13 @@ public class DragonMount : ModMount
 
         frame = new Rectangle(0, frameIndex * FrameHeight, FrameWidth, FrameHeight);
         drawOrigin = new Vector2(FrameWidth / 2f, FrameHeight / 2f);
+
+        // Garante que a cabeça do dragão vire exatamente na direção que o jogador virar
+        spriteEffects = drawPlayer.direction == 1 ? SpriteEffects.FlipHorizontally : SpriteEffects.None;
+        if (drawPlayer.gravDir == -1f)
+        {
+            spriteEffects |= SpriteEffects.FlipVertically;
+        }
 
         if (texture == null && MountData.backTexture != null && MountData.backTexture.IsLoaded)
         {
