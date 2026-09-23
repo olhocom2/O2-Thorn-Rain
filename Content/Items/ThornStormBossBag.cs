@@ -40,6 +40,9 @@ public class ThornStormBossBag : ModItem
         itemLoot.Add(ItemDropRule.Common(ItemID.PlatinumCoin, 1, 1, 1));
         itemLoot.Add(ItemDropRule.Common(ItemID.GoldCoin, 1, 50, 50));
 
+        // Barras de Luminita (25 a 40 barras garantidas)
+        itemLoot.Add(ItemDropRule.Common(ItemID.LunarBar, 1, 25, 40));
+
         // Adaga de Espinhos (100% garantida ao abrir a bolsa)
         itemLoot.Add(ItemDropRule.Common(ModContent.ItemType<DragonPower>()));
 

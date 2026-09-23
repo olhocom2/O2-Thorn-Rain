@@ -14,7 +14,12 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
   - Item consumível de Boss Bag obtido ao derrotar o Olho da Tempestade de Espinhos.
   - Tamanho compacto ao cair no chão do mundo (`24x24` hitbox, sprite proporcional `32x32`).
   - Funcionalidade completa de bolsa do tesouro vanilla: abertura via clique com o botão direito no inventário.
-  - Drop garantido de **1 Moeda de Platina** e **50 Moedas de Ouro**, além dos itens da montaria do dragão e chance de obter o troféu do boss.
+  - Drop garantido de **1 Moeda de Platina**, **50 Moedas de Ouro** e **25 a 40 Barras de Luminita** (`ItemID.LunarBar`), além dos itens da montaria do dragão e chance de obter o troféu do boss.
+- **Dificuldade Dinâmica por Modo de Mundo (`ThornStormBoss` & `ThornMinionTornado`):**
+  - Implementado `ApplyDifficultyAndPlayerScaling` e multiplicadores dinâmicos de IA baseados na dificuldade do mundo (Clássico, Expert, Master e Legendary/For the Worthy).
+  - Vida, dano e defesa escalam de forma equilibrada para singleplayer e multiplayer.
+  - No Expert e Master, o boss e os mini tornados se movem mais rápido, os dashes têm recarga reduzida, o limite de mini tornados aumenta (até 12 no Master) e os leques/chuvas de espinhos são mais densos e velozes.
+  - Adicionados debuffs dinâmicos no contato: `BuffID.Bleeding` e `BuffID.WindPushed` no Expert, com adição de `BuffID.Slow` prolongado no Master.
 - **Troféu do Boss (`ThornStormBossTrophy` & `ThornStormBossTrophyTile`):**
   - Troféu de parede 3×3 (`54x54` px) fixável em paredes de fundo, conforme o padrão de troféus de bosses do Terraria vanilla.
   - Dropado pelo boss com 10% de chance direta ou obtido dentro da Bolsa de Tesouro.

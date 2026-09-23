@@ -58,6 +58,30 @@ public class ThornMinionTornado : ModNPC
         NPC.value = 0f;
     }
 
+    public override void ApplyDifficultyAndPlayerScaling(int numPlayers, float balance, float bossAdjustment)
+    {
+        NPC.lifeMax = (int)(NPC.lifeMax * 0.70f * balance * bossAdjustment);
+        if (Main.masterMode)
+        {
+            NPC.lifeMax = (int)(NPC.lifeMax * 1.35f);
+            NPC.damage = 62;
+            NPC.defense = 16;
+        }
+        else if (Main.expertMode)
+        {
+            NPC.damage = 48;
+            NPC.defense = 12;
+        }
+    }
+
+    public override void OnHitPlayer(Player target, Player.HurtInfo hurtInfo)
+    {
+        if (Main.expertMode)
+        {
+            target.AddBuff(BuffID.Bleeding, 240); // 4s de sangramento no Expert/Master
+        }
+    }
+
     public override void FindFrame(int frameHeight)
     {
         NPC.frameCounter++;
@@ -92,7 +116,7 @@ public class ThornMinionTornado : ModNPC
             return;
         }
 
-        // 3. Velocidade e aceleração conforme a fase do boss
+        // 3. Velocidade e aceleração conforme a fase do boss e dificuldade do mundo
         float maxSpeed;
         float accel;
 
@@ -111,6 +135,10 @@ public class ThornMinionTornado : ModNPC
             maxSpeed = 4.8f;
             accel = 0.09f;
         }
+
+        float diffMult = Main.masterMode ? 1.25f : (Main.expertMode ? 1.12f : 1.0f);
+        maxSpeed *= diffMult;
+        accel *= diffMult;
 
         Vector2 toTarget = target.Center - NPC.Center;
         float distance = toTarget.Length();

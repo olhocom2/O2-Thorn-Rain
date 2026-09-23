@@ -47,6 +47,24 @@ public class ThornStormBoss : ModNPC
         }
     }
 
+    /// <summary>
+    /// Multiplicador dinâmico de velocidade e agressividade conforme a dificuldade do mundo.
+    /// Normal: 1.0x | Expert: 1.12x | Master: 1.24x | Legendary/FTW: 1.38x.
+    /// </summary>
+    private static float DifficultySpeedMultiplier =>
+        Main.getGoodWorld ? 1.38f :
+        Main.masterMode ? 1.24f :
+        Main.expertMode ? 1.12f : 1.0f;
+
+    /// <summary>
+    /// Redução dinâmica dos tempos de recarga e intervalos de ataque/dashes conforme a dificuldade.
+    /// Normal: 1.0x | Expert: 0.88x | Master: 0.78x | Legendary/FTW: 0.68x.
+    /// </summary>
+    private static float DifficultyRateMultiplier =>
+        Main.getGoodWorld ? 0.68f :
+        Main.masterMode ? 0.78f :
+        Main.expertMode ? 0.88f : 1.0f;
+
     // Variáveis de IA armazenadas nos slots de AI do NPC para sincronização multiplayer
     private ref float AttackTimer => ref NPC.ai[0];
     private ref float ChargeTimer => ref NPC.ai[1];
@@ -97,6 +115,50 @@ public class ThornStormBoss : ModNPC
         NPC.BossBar = ModContent.GetInstance<ThornStormBossBar>();
 
         Music = MusicID.Boss2;
+    }
+
+    public override void ApplyDifficultyAndPlayerScaling(int numPlayers, float balance, float bossAdjustment)
+    {
+        // Escala básica de vida considerando multiplayer
+        NPC.lifeMax = (int)(NPC.lifeMax * 0.70f * balance * bossAdjustment);
+
+        if (Main.masterMode)
+        {
+            // Modo Master: vida substancialmente ampliada, dano e defesa reforçados
+            NPC.lifeMax = (int)(NPC.lifeMax * 1.35f);
+            NPC.damage = 145;
+            NPC.defense = 48;
+        }
+        else if (Main.expertMode)
+        {
+            // Modo Expert: dano e defesa moderadamente ampliados
+            NPC.damage = 110;
+            NPC.defense = 40;
+        }
+
+        // Suporte especial para sementes de desafio supremo (For the Worthy / Legendary Mode)
+        if (Main.getGoodWorld)
+        {
+            NPC.lifeMax = (int)(NPC.lifeMax * 1.25f);
+            NPC.damage = (int)(NPC.damage * 1.25f);
+            NPC.defense = (int)(NPC.defense * 1.15f);
+        }
+    }
+
+    public override void OnHitPlayer(Player target, Player.HurtInfo hurtInfo)
+    {
+        // Aplica debuffs dinâmicos temáticos de tempestade e espinhos conforme a dificuldade
+        if (Main.masterMode)
+        {
+            target.AddBuff(BuffID.Bleeding, 480);   // 8s de sangramento profundo
+            target.AddBuff(BuffID.Slow, 120);       // 2s de lentidão por ventos fortes
+            target.AddBuff(BuffID.WindPushed, 180); // 3s de pressão atmosférica
+        }
+        else if (Main.expertMode)
+        {
+            target.AddBuff(BuffID.Bleeding, 360);   // 6s de sangramento
+            target.AddBuff(BuffID.WindPushed, 120); // 2s de rajada de vento
+        }
     }
 
     public override bool CheckActive()
@@ -180,7 +242,10 @@ public class ThornStormBoss : ModNPC
         // 1. Inclinação orgânica suave acompanhando o movimento lateral
         NPC.rotation = MathHelper.Lerp(NPC.rotation, NPC.velocity.X * 0.025f, 0.12f);
 
-        // 2. Parâmetros dinâmicos de velocidade e agressividade por fase
+        // 2. Parâmetros dinâmicos de velocidade e agressividade por fase e dificuldade do mundo
+        float diffSpeed = DifficultySpeedMultiplier;
+        float diffRate = DifficultyRateMultiplier;
+
         float maxSpeedX;
         float accelX;
         float hoverOffsetY;
@@ -189,8 +254,8 @@ public class ThornStormBoss : ModNPC
         {
             case BossPhase.Phase1_Gathering:
                 // Fase 1: Perseguição suave e controlada
-                maxSpeedX = 6.0f;
-                accelX = 0.10f;
+                maxSpeedX = 6.0f * diffSpeed;
+                accelX = 0.10f * diffSpeed;
                 hoverOffsetY = -260f;
                 ChargeState = 0;
                 ChargeTimer = 0;
@@ -198,16 +263,16 @@ public class ThornStormBoss : ModNPC
 
             case BossPhase.Phase2_Gale:
                 // Fase 2: Perseguição ágil com pequenos dashes ocasionais
-                maxSpeedX = 11.0f;
-                accelX = 0.22f;
+                maxSpeedX = 11.0f * diffSpeed;
+                accelX = 0.22f * diffSpeed;
                 hoverOffsetY = -200f;
                 break;
 
             case BossPhase.Phase3_Cataclysm:
             default:
                 // Fase 3: Perseguição frenética e extrema
-                maxSpeedX = 16.0f;
-                accelX = 0.40f;
+                maxSpeedX = 16.0f * diffSpeed;
+                accelX = 0.40f * diffSpeed;
                 hoverOffsetY = -150f;
                 break;
         }
@@ -217,8 +282,9 @@ public class ThornStormBoss : ModNPC
         {
             ChargeTimer++;
 
-            int chargeInterval = (phase == BossPhase.Phase2_Gale) ? 300 : 160; // a cada 5s ou 2.6s
-            int telegraphTicks = (phase == BossPhase.Phase2_Gale) ? 30 : 20;
+            int baseInterval = (phase == BossPhase.Phase2_Gale) ? 300 : 160;
+            int chargeInterval = Math.Max(70, (int)(baseInterval * diffRate));
+            int telegraphTicks = (int)(((phase == BossPhase.Phase2_Gale) ? 30 : 20) * (Main.masterMode ? 0.85f : 1.0f));
 
             if (ChargeState == 0 && ChargeTimer >= chargeInterval)
             {
@@ -249,7 +315,7 @@ public class ThornStormBoss : ModNPC
                     else
                         chargeDir = new Vector2(0f, 1f);
 
-                    float chargeSpeed = (phase == BossPhase.Phase2_Gale) ? 15f : 22f;
+                    float chargeSpeed = ((phase == BossPhase.Phase2_Gale) ? 15f : 22f) * diffSpeed;
                     NPC.velocity = chargeDir * chargeSpeed;
 
                     SoundEngine.PlaySound(SoundID.ForceRoar with { Pitch = phase == BossPhase.Phase3_Cataclysm ? -0.35f : -0.1f }, NPC.Center);
@@ -286,8 +352,8 @@ public class ThornStormBoss : ModNPC
             NPC.velocity.X *= 0.96f;
         }
 
-        float targetYVel = MathHelper.Clamp(toTarget.Y * 0.04f, -8f, 8f);
-        NPC.velocity.Y = MathHelper.Lerp(NPC.velocity.Y, targetYVel, 0.09f);
+        float targetYVel = MathHelper.Clamp(toTarget.Y * 0.04f, -8f * diffSpeed, 8f * diffSpeed);
+        NPC.velocity.Y = MathHelper.Lerp(NPC.velocity.Y, targetYVel, 0.09f * diffSpeed);
     }
 
     // =========================================================================
@@ -298,31 +364,34 @@ public class ThornStormBoss : ModNPC
     {
         _minionTornadoTimer++;
 
-        int interval;
+        int baseInterval;
         int maxMinions;
         int phaseNumber;
+        float diffRate = DifficultyRateMultiplier;
 
         switch (phase)
         {
             case BossPhase.Phase1_Gathering:
-                interval = 480; // a cada 8 segundos
-                maxMinions = 2;  // pouquíssimos
+                baseInterval = 480; // 8s no clássico
+                maxMinions = Main.masterMode ? 4 : (Main.expertMode ? 3 : 2);
                 phaseNumber = 1;
                 break;
 
             case BossPhase.Phase2_Gale:
-                interval = 270; // a cada 4.5 segundos
-                maxMinions = 4;  // quantidade moderada
+                baseInterval = 270; // 4.5s no clássico
+                maxMinions = Main.masterMode ? 8 : (Main.expertMode ? 6 : 4);
                 phaseNumber = 2;
                 break;
 
             case BossPhase.Phase3_Cataclysm:
             default:
-                interval = 180; // a cada 3 segundos
-                maxMinions = 7;  // muitos mini tornados
+                baseInterval = 180; // 3s no clássico
+                maxMinions = Main.masterMode ? 12 : (Main.expertMode ? 9 : 7);
                 phaseNumber = 3;
                 break;
         }
+
+        int interval = Math.Max(70, (int)(baseInterval * diffRate));
 
         if (_minionTornadoTimer >= interval)
         {
@@ -339,7 +408,9 @@ public class ThornStormBoss : ModNPC
 
             if (currentMinions < maxMinions)
             {
-                int spawnCount = (phase == BossPhase.Phase3_Cataclysm && currentMinions <= maxMinions - 2) ? 2 : 1;
+                int spawnCount = (phase == BossPhase.Phase3_Cataclysm && currentMinions <= maxMinions - 2)
+                    ? (Main.masterMode ? 3 : 2)
+                    : 1;
 
                 for (int s = 0; s < spawnCount; s++)
                 {
@@ -397,15 +468,17 @@ public class ThornStormBoss : ModNPC
     }
 
     /// <summary>
-    /// FASE 1: Cortina suave e controlada de espinhos a cada 55 ticks (0.91s).
+    /// FASE 1: Cortina de espinhos escalonada com a dificuldade (a cada 40-55 ticks).
     /// </summary>
     private void UpdatePhase1Attacks(Player target)
     {
-        if (AttackTimer >= 55)
+        int cooldown = Math.Max(25, (int)(55 * DifficultyRateMultiplier));
+        if (AttackTimer >= cooldown)
         {
             AttackTimer = 0;
 
-            int count = Math.Min(2, SpikeRainSystem.MaxGlobalSpikes - SpikesProjectile.ActiveCount);
+            int baseCount = Main.masterMode ? 4 : (Main.expertMode ? 3 : 2);
+            int count = Math.Min(baseCount, SpikeRainSystem.MaxGlobalSpikes - SpikesProjectile.ActiveCount);
             int spikeType = ModContent.ProjectileType<SpikesProjectile>();
             int damage = SpikeRainSystem.GetSpikeDamage();
 
@@ -413,7 +486,10 @@ public class ThornStormBoss : ModNPC
             {
                 float offsetX = Main.rand.NextFloat(-NPC.width * 0.35f, NPC.width * 0.35f);
                 Vector2 spawnPos = NPC.Center + new Vector2(offsetX, NPC.height * 0.3f);
-                Vector2 velocity = new(Main.rand.NextFloat(-1.5f, 1.5f), Main.rand.NextFloat(8f, 12f));
+                Vector2 velocity = new(
+                    Main.rand.NextFloat(-1.5f, 1.5f) * DifficultySpeedMultiplier,
+                    Main.rand.NextFloat(8f, 12f) * DifficultySpeedMultiplier
+                );
 
                 Projectile.NewProjectile(
                     NPC.GetSource_FromAI(),
@@ -429,16 +505,18 @@ public class ThornStormBoss : ModNPC
     }
 
     /// <summary>
-    /// FASE 2: Rajadas diagonais cruzadas e mais caóticas a cada 28 ticks (0.46s).
+    /// FASE 2: Rajadas diagonais cruzadas intensificadas no Expert/Master (a cada 20-28 ticks).
     /// </summary>
     private void UpdatePhase2Attacks(Player target)
     {
-        if (AttackTimer >= 28)
+        int cooldown = Math.Max(14, (int)(28 * DifficultyRateMultiplier));
+        if (AttackTimer >= cooldown)
         {
             AttackTimer = 0;
             InternalCounter++;
 
-            int count = Math.Min(4, SpikeRainSystem.MaxGlobalSpikes - SpikesProjectile.ActiveCount);
+            int baseCount = Main.masterMode ? 6 : (Main.expertMode ? 5 : 4);
+            int count = Math.Min(baseCount, SpikeRainSystem.MaxGlobalSpikes - SpikesProjectile.ActiveCount);
             int spikeType = ModContent.ProjectileType<SpikesProjectile>();
             int damage = SpikeRainSystem.GetSpikeDamage();
 
@@ -448,7 +526,7 @@ public class ThornStormBoss : ModNPC
             for (int i = 0; i < count; i++)
             {
                 float angle = MathHelper.ToRadians(baseAngle + Main.rand.NextFloat(-24f, 24f));
-                float speed = Main.rand.NextFloat(12f, 17f);
+                float speed = Main.rand.NextFloat(12f, 17f) * DifficultySpeedMultiplier;
                 Vector2 velocity = angle.ToRotationVector2() * speed;
 
                 Projectile.NewProjectile(
@@ -465,16 +543,20 @@ public class ThornStormBoss : ModNPC
     }
 
     /// <summary>
-    /// FASE 3: Tempestade frenética de espinhos 360° e leques concentrados a cada 18 ticks (0.3s).
+    /// FASE 3: Tempestade frenética de espinhos 360° e leques velozes escalonados com a dificuldade.
     /// </summary>
     private void UpdatePhase3Attacks(Player target)
     {
-        if (AttackTimer >= 18)
+        int cooldown = Math.Max(10, (int)(18 * DifficultyRateMultiplier));
+        if (AttackTimer >= cooldown)
         {
             AttackTimer = 0;
             InternalCounter++;
 
-            int desired = (InternalCounter % 3 == 0) ? 7 : 5;
+            int desired = (InternalCounter % 3 == 0)
+                ? (Main.masterMode ? 12 : (Main.expertMode ? 9 : 7))
+                : (Main.masterMode ? 8 : (Main.expertMode ? 6 : 5));
+
             int count = Math.Min(desired, SpikeRainSystem.MaxGlobalSpikes - SpikesProjectile.ActiveCount);
             int spikeType = ModContent.ProjectileType<SpikesProjectile>();
             int damage = SpikeRainSystem.GetSpikeDamage();
@@ -485,7 +567,7 @@ public class ThornStormBoss : ModNPC
                 for (int i = 0; i < count; i++)
                 {
                     float angle = i * (MathHelper.TwoPi / desired) + Main.rand.NextFloat(-0.1f, 0.1f);
-                    Vector2 velocity = angle.ToRotationVector2() * 14f;
+                    Vector2 velocity = angle.ToRotationVector2() * (14f * DifficultySpeedMultiplier);
 
                     Projectile.NewProjectile(
                         NPC.GetSource_FromAI(),
@@ -506,8 +588,8 @@ public class ThornStormBoss : ModNPC
 
                 for (int i = 0; i < count; i++)
                 {
-                    float spread = MathHelper.ToRadians((i - (count - 1) / 2f) * 15f);
-                    Vector2 velocity = (targetAngle + spread).ToRotationVector2() * Main.rand.NextFloat(14f, 19f);
+                    float spread = MathHelper.ToRadians((i - (count - 1) / 2f) * 14f);
+                    Vector2 velocity = (targetAngle + spread).ToRotationVector2() * (Main.rand.NextFloat(14f, 19f) * DifficultySpeedMultiplier);
 
                     Projectile.NewProjectile(
                         NPC.GetSource_FromAI(),

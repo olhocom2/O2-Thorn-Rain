@@ -118,7 +118,11 @@ public class DragonMount : ModMount
 
         if (MountData.playerYOffsets == null || MountData.playerYOffsets.Length < TotalFramesCount)
         {
-            MountData.playerYOffsets = new int[] { -4, -3, -2, -1, 0, -1, -2, -3, -4 };
+            MountData.playerYOffsets = new int[]
+            {
+                23, 22, 21, 20, 19,
+                20, 21, 22, 23
+            };
         }
 
         if (!Main.dedServ)
