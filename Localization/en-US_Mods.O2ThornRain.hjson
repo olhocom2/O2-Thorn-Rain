@@ -34,6 +34,16 @@ Items: {
 			Cannot be used if the event is already active
 			'''
 	}
+
+	ThornStormBossBag: {
+		DisplayName: Treasure Bag (Eye of the Thorn Storm)
+		Tooltip: "{$CommonItemTooltip.RightClickToOpen}"
+	}
+
+	ThornStormBossTrophy: {
+		DisplayName: Eye of the Thorn Storm Trophy
+		Tooltip: ""
+	}
 }
 
 Buffs: {
@@ -49,7 +59,10 @@ NPCs: {
 	ThornStormSummonTornado.DisplayName: Abyssal Mini Vortex
 	ThornBiomeTornado.DisplayName: Ancestral Thorn Tornado
 	ThornStormBoss.DisplayName: Eye of the Thorn Storm
+	ThornMinionTornado.DisplayName: Ravenous Mini Vortex
 }
+
+Tiles.ThornStormBossTrophyTile.MapEntry: Trophy
 
 Biomes: {
 	Jungle: Jungle

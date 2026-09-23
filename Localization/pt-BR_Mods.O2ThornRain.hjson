@@ -34,6 +34,16 @@ Items: {
 			Não pode ser usado se o evento já estiver em andamento
 			'''
 	}
+
+	ThornStormBossBag: {
+		DisplayName: Bolsa de Tesouro (Olho da Tempestade)
+		Tooltip: "{$CommonItemTooltip.RightClickToOpen}"
+	}
+
+	ThornStormBossTrophy: {
+		DisplayName: Troféu do Olho da Tempestade
+		Tooltip: ""
+	}
 }
 
 Buffs: {
@@ -49,7 +59,10 @@ NPCs: {
 	ThornStormSummonTornado.DisplayName: Pequeno Vórtice Abissal
 	ThornBiomeTornado.DisplayName: Tornado de Espinhos Ancestral
 	ThornStormBoss.DisplayName: O Olho da Tempestade de Espinhos
+	ThornMinionTornado.DisplayName: Mini Vórtice Voraz
 }
+
+Tiles.ThornStormBossTrophyTile.MapEntry: Troféu
 
 Biomes: {
 	Jungle: Selva

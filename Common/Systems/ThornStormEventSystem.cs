@@ -336,7 +336,7 @@ public class ThornStormEventSystem : ModSystem
             if (npcIndex >= 0 && npcIndex < Main.maxNPCs)
             {
                 Main.npc[npcIndex].netUpdate = true;
-                SoundEngine.PlaySound(SoundID.ForceRoar with { Pitch = -0.3f }, target.Center);
+                SoundEngine.PlaySound(SoundID.Roar, target.Center);
             }
         }
     }

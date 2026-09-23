@@ -8,6 +8,7 @@ using Terraria.GameContent.ItemDropRules;
 using Terraria.ID;
 using Terraria.ModLoader;
 using O2ThornRain.Common.Systems;
+using O2ThornRain.Content.BossBars;
 using O2ThornRain.Content.Items;
 using O2ThornRain.Content.Projectiles;
 
@@ -15,10 +16,11 @@ namespace O2ThornRain.Content.NPCs;
 
 /// <summary>
 /// Boss final do evento "A Tempestade dos Quatro".
-/// Um tornado gigantesco carmesim/vermelho que persegue e pressiona o jogador,
+/// Um tornado colossal carmesim/vermelho que persegue e pressiona o jogador,
 /// possui 3 fases de combate de acordo com sua vida, desfere chuvas de espinhos,
-/// cospe Dragões de Espinhos (Thorn Dragons) e dropa o item "Poder do Dragão" ao ser derrotado.
+/// invoca mini tornados destruíveis e dropa a Bolsa do Tesouro e o Troféu ao ser derrotado.
 /// </summary>
+[AutoloadBossHead]
 public class ThornStormBoss : ModNPC
 {
     private const int FrameCount = 8;
@@ -27,9 +29,9 @@ public class ThornStormBoss : ModNPC
     // Fases de combate
     public enum BossPhase
     {
-        Phase1_Gathering,   // 100% - 70% HP: Rastreamento horizontal e cortina de espinhos
-        Phase2_Gale,        // 70% - 40% HP: Velocidade aumentada, rajadas diagonais
-        Phase3_Cataclysm    // < 40% HP: Tempestade violenta, velocidade extrema, rajadas radiais
+        Phase1_Gathering,   // 100% - 70% HP: Perseguição suave, espinhos controlados, poucos mini tornados
+        Phase2_Gale,        // 70% - 40% HP: Velocidade aumentada, pequenos dashes, mais mini tornados
+        Phase3_Cataclysm    // < 40% HP: Dashes frenéticos, tempestade de espinhos 360°, enxame de mini tornados
     }
 
     public BossPhase CurrentPhase
@@ -45,13 +47,13 @@ public class ThornStormBoss : ModNPC
         }
     }
 
-    // Variáveis de IA armazenadas nos slots de AI do NPC para suporte total à sincronização
+    // Variáveis de IA armazenadas nos slots de AI do NPC para sincronização multiplayer
     private ref float AttackTimer => ref NPC.ai[0];
     private ref float ChargeTimer => ref NPC.ai[1];
     private ref float ChargeState => ref NPC.ai[2]; // 0: normal, 1: preparando investida, 2: investindo
     private ref float InternalCounter => ref NPC.ai[3];
 
-    private int _dragonTimer;
+    private int _minionTornadoTimer;
 
     public override void SetStaticDefaults()
     {
@@ -59,7 +61,7 @@ public class ThornStormBoss : ModNPC
 
         NPCID.Sets.BossBestiaryPriority.Add(Type);
         NPCID.Sets.MPAllowedEnemies[Type] = true;
-        NPCID.Sets.TrailCacheLength[Type] = 6;
+        NPCID.Sets.TrailCacheLength[Type] = 8;
         NPCID.Sets.TrailingMode[Type] = 1;
 
         NPCID.Sets.NPCBestiaryDrawModifiers drawModifiers = new()
@@ -71,12 +73,13 @@ public class ThornStormBoss : ModNPC
 
     public override void SetDefaults()
     {
-        NPC.width = 170;
-        NPC.height = 170;
+        // Hitbox significativamente maior para refletir a escala imponente do boss
+        NPC.width = 240;
+        NPC.height = 240;
 
-        NPC.damage = 70;
-        NPC.defense = 32;
-        NPC.lifeMax = 45000;
+        NPC.damage = 75;
+        NPC.defense = 34;
+        NPC.lifeMax = 48000;
 
         NPC.HitSound = SoundID.NPCHit3;
         NPC.DeathSound = SoundID.NPCDeath10;
@@ -88,15 +91,16 @@ public class ThornStormBoss : ModNPC
 
         NPC.boss = true;
         NPC.friendly = false;
-        NPC.value = Item.buyPrice(gold: 15);
+        NPC.value = Item.buyPrice(gold: 25);
+
+        // Barra de vida oficial do boss
+        NPC.BossBar = ModContent.GetInstance<ThornStormBossBar>();
 
         Music = MusicID.Boss2;
     }
 
     public override bool CheckActive()
     {
-        // Enquanto o jogador estiver vivo, nunca sofre despawn por distância.
-        // Se o jogador estiver morto ou inativo, permite o despawn natural.
         if (NPC.target >= 0 && NPC.target < Main.maxPlayers)
         {
             Player target = Main.player[NPC.target];
@@ -109,6 +113,15 @@ public class ThornStormBoss : ModNPC
     public override void AI()
     {
         // -------------------------------------------------------------
+        // 0. SOM CLÁSSICO DE SPAWN DO BOSS (ROAR) NO PRIMEIRO FRAME
+        // -------------------------------------------------------------
+        if (NPC.localAI[3] == 0f)
+        {
+            NPC.localAI[3] = 1f;
+            SoundEngine.PlaySound(SoundID.Roar, NPC.Center);
+        }
+
+        // -------------------------------------------------------------
         // 1. GERENCIAMENTO DE ALVO E DESPAWN QUANDO TODOS MORREM
         // -------------------------------------------------------------
         if (NPC.target < 0 || NPC.target == 255 || Main.player[NPC.target].dead || !Main.player[NPC.target].active)
@@ -120,9 +133,9 @@ public class ThornStormBoss : ModNPC
 
         if (!targetPlayer.active || targetPlayer.dead)
         {
-            // Todos os jogadores morreram: sobe para os céus e desaparece
-            NPC.velocity.Y -= 0.5f;
-            NPC.velocity.X *= 0.95f;
+            // Todos os jogadores morreram: sobe rapidamente para os céus e desaparece
+            NPC.velocity.Y -= 0.6f;
+            NPC.velocity.X *= 0.94f;
             NPC.EncourageDespawn(10);
 
             if (Main.netMode != NetmodeID.MultiplayerClient && NPC.timeLeft <= 1)
@@ -138,35 +151,36 @@ public class ThornStormBoss : ModNPC
         SpawnStormDust();
 
         // -------------------------------------------------------------
-        // 3. FASE ATUAL E DETERMINAÇÃO DE VELOCIDADE
+        // 3. FASE ATUAL
         // -------------------------------------------------------------
-        float lifeRatio = (float)NPC.life / NPC.lifeMax;
-        BossPhase phase = lifeRatio > 0.70f ? BossPhase.Phase1_Gathering :
-                          lifeRatio > 0.40f ? BossPhase.Phase2_Gale :
-                          BossPhase.Phase3_Cataclysm;
+        BossPhase phase = CurrentPhase;
 
         // -------------------------------------------------------------
-        // 4. MOVIMENTAÇÃO DE PERSEGUIÇÃO E PRESSÃO AÉREA
+        // 4. MOVIMENTAÇÃO DE PERSEGUIÇÃO E DASHES POR FASE
         // -------------------------------------------------------------
         UpdateMovement(targetPlayer, phase);
 
-        // Apenas o servidor gera projéteis e orquestra ataques
+        // Apenas o servidor gera projéteis e orquestra ataques e summons
         if (Main.netMode == NetmodeID.MultiplayerClient)
             return;
 
         // -------------------------------------------------------------
-        // 5. ATAQUES DE ESPINHOS POR FASE (RESPEITA MAXGLOBALSPIKES = 120)
+        // 5. INVOÇÃO DE MINI TORNADOS E ATAQUES DE ESPINHOS
         // -------------------------------------------------------------
+        UpdateMinionTornadoes(targetPlayer, phase);
         UpdateAttacks(targetPlayer, phase);
     }
 
     // =========================================================================
-    // MOVIMENTAÇÃO E PRESSÃO
+    // MOVIMENTAÇÃO, PERSEGUIÇÃO E INVESTIDAS (DASHES)
     // =========================================================================
 
     private void UpdateMovement(Player target, BossPhase phase)
     {
-        // Configurações de velocidade baseadas na fase de agressividade
+        // 1. Inclinação orgânica suave acompanhando o movimento lateral
+        NPC.rotation = MathHelper.Lerp(NPC.rotation, NPC.velocity.X * 0.025f, 0.12f);
+
+        // 2. Parâmetros dinâmicos de velocidade e agressividade por fase
         float maxSpeedX;
         float accelX;
         float hoverOffsetY;
@@ -174,106 +188,193 @@ public class ThornStormBoss : ModNPC
         switch (phase)
         {
             case BossPhase.Phase1_Gathering:
-                maxSpeedX = 7.5f;
-                accelX = 0.14f;
-                hoverOffsetY = -240f;
+                // Fase 1: Perseguição suave e controlada
+                maxSpeedX = 6.0f;
+                accelX = 0.10f;
+                hoverOffsetY = -260f;
+                ChargeState = 0;
+                ChargeTimer = 0;
                 break;
 
             case BossPhase.Phase2_Gale:
-                maxSpeedX = 11.5f;
-                accelX = 0.24f;
+                // Fase 2: Perseguição ágil com pequenos dashes ocasionais
+                maxSpeedX = 11.0f;
+                accelX = 0.22f;
                 hoverOffsetY = -200f;
                 break;
 
             case BossPhase.Phase3_Cataclysm:
             default:
-                maxSpeedX = 15.5f;
-                accelX = 0.38f;
-                hoverOffsetY = -160f;
+                // Fase 3: Perseguição frenética e extrema
+                maxSpeedX = 16.0f;
+                accelX = 0.40f;
+                hoverOffsetY = -150f;
                 break;
         }
 
-        // Sistema de Investida Aérea (disponível nas fases 2 e 3)
+        // 3. Sistema de Dashes (Investidas) para Fases 2 e 3
         if (phase != BossPhase.Phase1_Gathering)
         {
             ChargeTimer++;
 
-            int chargeInterval = (phase == BossPhase.Phase2_Gale) ? 360 : 260; // a cada 6s ou 4.3s
+            int chargeInterval = (phase == BossPhase.Phase2_Gale) ? 300 : 160; // a cada 5s ou 2.6s
+            int telegraphTicks = (phase == BossPhase.Phase2_Gale) ? 30 : 20;
 
             if (ChargeState == 0 && ChargeTimer >= chargeInterval)
             {
-                // Inicia preparação da investida: desacelera e acumula vento
+                // Inicia aviso/telegraph da investida
                 ChargeState = 1;
                 ChargeTimer = 0;
-                NPC.velocity *= 0.5f;
-                SoundEngine.PlaySound(SoundID.Item122 with { Pitch = -0.4f, Volume = 0.9f }, NPC.Center);
+                NPC.velocity *= 0.4f;
+                SoundEngine.PlaySound(SoundID.Item122 with { Pitch = -0.3f, Volume = 0.9f }, NPC.Center);
             }
             else if (ChargeState == 1)
             {
-                // Preparando por 40 ticks
-                if (ChargeTimer >= 40)
+                // Preparação (aviso com partículas concentradas)
+                for (int d = 0; d < 2; d++)
+                {
+                    Vector2 dustVel = (target.Center - NPC.Center);
+                    if (dustVel != Vector2.Zero) dustVel.Normalize();
+                    Dust.NewDust(NPC.position, NPC.width, NPC.height, DustID.CrimsonTorch, dustVel.X * 4f, dustVel.Y * 4f, 100, default, 1.4f);
+                }
+
+                if (ChargeTimer >= telegraphTicks)
                 {
                     ChargeState = 2;
                     ChargeTimer = 0;
 
-                    // Lança investida na direção do jogador
-                    Vector2 chargeDirection = (target.Center - NPC.Center);
-                    if (chargeDirection != Vector2.Zero)
-                        chargeDirection.Normalize();
+                    Vector2 chargeDir = (target.Center - NPC.Center);
+                    if (chargeDir != Vector2.Zero)
+                        chargeDir.Normalize();
+                    else
+                        chargeDir = new Vector2(0f, 1f);
 
-                    float chargeSpeed = (phase == BossPhase.Phase2_Gale) ? 14f : 19f;
-                    NPC.velocity = chargeDirection * chargeSpeed;
+                    float chargeSpeed = (phase == BossPhase.Phase2_Gale) ? 15f : 22f;
+                    NPC.velocity = chargeDir * chargeSpeed;
 
-                    SoundEngine.PlaySound(SoundID.ForceRoar with { Pitch = -0.2f }, NPC.Center);
+                    SoundEngine.PlaySound(SoundID.ForceRoar with { Pitch = phase == BossPhase.Phase3_Cataclysm ? -0.35f : -0.1f }, NPC.Center);
                 }
                 return;
             }
             else if (ChargeState == 2)
             {
-                // Investindo por 35 ticks
-                if (ChargeTimer >= 35)
+                // Investindo por 26 ticks
+                if (ChargeTimer >= 26)
                 {
                     ChargeState = 0;
                     ChargeTimer = 0;
-                    NPC.velocity *= 0.4f;
+                    NPC.velocity *= 0.35f;
                 }
                 return;
             }
         }
 
-        // Movimento padrão: pairar estrategicamente sobre o jogador
+        // 4. Movimento padrão: pairar e pressionar o jogador
         Vector2 targetHoverPos = target.Center + new Vector2(0f, hoverOffsetY);
         Vector2 toTarget = targetHoverPos - NPC.Center;
 
-        // Movimentação horizontal
-        if (toTarget.X > 40f)
+        if (toTarget.X > 35f)
         {
             NPC.velocity.X = MathHelper.Clamp(NPC.velocity.X + accelX, -maxSpeedX, maxSpeedX);
         }
-        else if (toTarget.X < -40f)
+        else if (toTarget.X < -35f)
         {
             NPC.velocity.X = MathHelper.Clamp(NPC.velocity.X - accelX, -maxSpeedX, maxSpeedX);
         }
         else
         {
-            NPC.velocity.X *= 0.95f;
+            NPC.velocity.X *= 0.96f;
         }
 
-        // Movimentação vertical suave
-        float targetYVel = MathHelper.Clamp(toTarget.Y * 0.04f, -7f, 7f);
-        NPC.velocity.Y = MathHelper.Lerp(NPC.velocity.Y, targetYVel, 0.08f);
+        float targetYVel = MathHelper.Clamp(toTarget.Y * 0.04f, -8f, 8f);
+        NPC.velocity.Y = MathHelper.Lerp(NPC.velocity.Y, targetYVel, 0.09f);
     }
 
     // =========================================================================
-    // ATAQUES DE ESPINHOS (DISPAROS EQUILIBRADOS E SEGUROS)
+    // INVOÇÃO DE MINI TORNADOS DESTRUÍVEIS (SUBSTITUEM OS DRAGÕES)
+    // =========================================================================
+
+    private void UpdateMinionTornadoes(Player target, BossPhase phase)
+    {
+        _minionTornadoTimer++;
+
+        int interval;
+        int maxMinions;
+        int phaseNumber;
+
+        switch (phase)
+        {
+            case BossPhase.Phase1_Gathering:
+                interval = 480; // a cada 8 segundos
+                maxMinions = 2;  // pouquíssimos
+                phaseNumber = 1;
+                break;
+
+            case BossPhase.Phase2_Gale:
+                interval = 270; // a cada 4.5 segundos
+                maxMinions = 4;  // quantidade moderada
+                phaseNumber = 2;
+                break;
+
+            case BossPhase.Phase3_Cataclysm:
+            default:
+                interval = 180; // a cada 3 segundos
+                maxMinions = 7;  // muitos mini tornados
+                phaseNumber = 3;
+                break;
+        }
+
+        if (_minionTornadoTimer >= interval)
+        {
+            _minionTornadoTimer = 0;
+
+            int minionType = ModContent.NPCType<ThornMinionTornado>();
+            int currentMinions = 0;
+            for (int i = 0; i < Main.maxNPCs; i++)
+            {
+                NPC n = Main.npc[i];
+                if (n.active && n.type == minionType)
+                    currentMinions++;
+            }
+
+            if (currentMinions < maxMinions)
+            {
+                int spawnCount = (phase == BossPhase.Phase3_Cataclysm && currentMinions <= maxMinions - 2) ? 2 : 1;
+
+                for (int s = 0; s < spawnCount; s++)
+                {
+                    Vector2 spawnOffset = Main.rand.NextVector2Circular(NPC.width * 0.4f, NPC.height * 0.4f);
+                    Vector2 spawnPos = NPC.Center + spawnOffset;
+
+                    int minionIdx = NPC.NewNPC(
+                        NPC.GetSource_FromAI(),
+                        (int)spawnPos.X,
+                        (int)spawnPos.Y,
+                        minionType,
+                        ai0: phaseNumber,
+                        ai1: NPC.whoAmI
+                    );
+
+                    if (minionIdx >= 0 && minionIdx < Main.maxNPCs)
+                    {
+                        Main.npc[minionIdx].netUpdate = true;
+                    }
+                }
+
+                SoundEngine.PlaySound(
+                    SoundID.Item122 with { Pitch = 0.2f, Volume = 0.85f },
+                    NPC.Center
+                );
+            }
+        }
+    }
+
+    // =========================================================================
+    // ATAQUES DE ESPINHOS POR FASE
     // =========================================================================
 
     private void UpdateAttacks(Player target, BossPhase phase)
     {
-        // 1. Invocação periódica de Dragões de Espinhos (Thorn Dragons)
-        UpdateThornDragons(target, phase);
-
-        // 2. Se o limite global de espinhos já foi atingido, não dispara novos espinhos
         if (SpikesProjectile.ActiveCount >= SpikeRainSystem.MaxGlobalSpikes)
             return;
 
@@ -296,23 +397,23 @@ public class ThornStormBoss : ModNPC
     }
 
     /// <summary>
-    /// FASE 1: Cortina descendente de espinhos a cada 40 ticks (0.66s).
+    /// FASE 1: Cortina suave e controlada de espinhos a cada 55 ticks (0.91s).
     /// </summary>
     private void UpdatePhase1Attacks(Player target)
     {
-        if (AttackTimer >= 40)
+        if (AttackTimer >= 55)
         {
             AttackTimer = 0;
 
-            int count = Math.Min(3, SpikeRainSystem.MaxGlobalSpikes - SpikesProjectile.ActiveCount);
+            int count = Math.Min(2, SpikeRainSystem.MaxGlobalSpikes - SpikesProjectile.ActiveCount);
             int spikeType = ModContent.ProjectileType<SpikesProjectile>();
             int damage = SpikeRainSystem.GetSpikeDamage();
 
             for (int i = 0; i < count; i++)
             {
-                float offsetX = Main.rand.NextFloat(-NPC.width * 0.4f, NPC.width * 0.4f);
-                Vector2 spawnPos = NPC.Center + new Vector2(offsetX, NPC.height * 0.35f);
-                Vector2 velocity = new(Main.rand.NextFloat(-2f, 2f), Main.rand.NextFloat(8f, 13f));
+                float offsetX = Main.rand.NextFloat(-NPC.width * 0.35f, NPC.width * 0.35f);
+                Vector2 spawnPos = NPC.Center + new Vector2(offsetX, NPC.height * 0.3f);
+                Vector2 velocity = new(Main.rand.NextFloat(-1.5f, 1.5f), Main.rand.NextFloat(8f, 12f));
 
                 Projectile.NewProjectile(
                     NPC.GetSource_FromAI(),
@@ -328,7 +429,7 @@ public class ThornStormBoss : ModNPC
     }
 
     /// <summary>
-    /// FASE 2: Rajadas diagonais cruzadas a cada 28 ticks (0.46s).
+    /// FASE 2: Rajadas diagonais cruzadas e mais caóticas a cada 28 ticks (0.46s).
     /// </summary>
     private void UpdatePhase2Attacks(Player target)
     {
@@ -346,7 +447,7 @@ public class ThornStormBoss : ModNPC
 
             for (int i = 0; i < count; i++)
             {
-                float angle = MathHelper.ToRadians(baseAngle + Main.rand.NextFloat(-20f, 20f));
+                float angle = MathHelper.ToRadians(baseAngle + Main.rand.NextFloat(-24f, 24f));
                 float speed = Main.rand.NextFloat(12f, 17f);
                 Vector2 velocity = angle.ToRotationVector2() * speed;
 
@@ -364,16 +465,16 @@ public class ThornStormBoss : ModNPC
     }
 
     /// <summary>
-    /// FASE 3: Tempestade furiosa com rajadas radiais e leques a cada 20 ticks (0.33s).
+    /// FASE 3: Tempestade frenética de espinhos 360° e leques concentrados a cada 18 ticks (0.3s).
     /// </summary>
     private void UpdatePhase3Attacks(Player target)
     {
-        if (AttackTimer >= 20)
+        if (AttackTimer >= 18)
         {
             AttackTimer = 0;
             InternalCounter++;
 
-            int desired = (InternalCounter % 3 == 0) ? 6 : 4;
+            int desired = (InternalCounter % 3 == 0) ? 7 : 5;
             int count = Math.Min(desired, SpikeRainSystem.MaxGlobalSpikes - SpikesProjectile.ActiveCount);
             int spikeType = ModContent.ProjectileType<SpikesProjectile>();
             int damage = SpikeRainSystem.GetSpikeDamage();
@@ -384,7 +485,7 @@ public class ThornStormBoss : ModNPC
                 for (int i = 0; i < count; i++)
                 {
                     float angle = i * (MathHelper.TwoPi / desired) + Main.rand.NextFloat(-0.1f, 0.1f);
-                    Vector2 velocity = angle.ToRotationVector2() * 13f;
+                    Vector2 velocity = angle.ToRotationVector2() * 14f;
 
                     Projectile.NewProjectile(
                         NPC.GetSource_FromAI(),
@@ -405,8 +506,8 @@ public class ThornStormBoss : ModNPC
 
                 for (int i = 0; i < count; i++)
                 {
-                    float spread = MathHelper.ToRadians((i - (count - 1) / 2f) * 16f);
-                    Vector2 velocity = (targetAngle + spread).ToRotationVector2() * Main.rand.NextFloat(13f, 18f);
+                    float spread = MathHelper.ToRadians((i - (count - 1) / 2f) * 15f);
+                    Vector2 velocity = (targetAngle + spread).ToRotationVector2() * Main.rand.NextFloat(14f, 19f);
 
                     Projectile.NewProjectile(
                         NPC.GetSource_FromAI(),
@@ -420,91 +521,21 @@ public class ThornStormBoss : ModNPC
                 }
             }
         }
-
-        // =========================================================================
-        // ETAPA 3: Invocação dos Dragões de Espinhos (Thorn Dragons)
-        // =========================================================================
-    }
-
-    private void UpdateThornDragons(Player target, BossPhase phase)
-    {
-        _dragonTimer++;
-
-        int interval;
-        int maxDragons;
-
-        switch (phase)
-        {
-            case BossPhase.Phase1_Gathering:
-                interval = 480; // a cada 8 segundos
-                maxDragons = 1;
-                break;
-
-            case BossPhase.Phase2_Gale:
-                interval = 300; // a cada 5 segundos
-                maxDragons = 2;
-                break;
-
-            case BossPhase.Phase3_Cataclysm:
-            default:
-                interval = 210; // a cada 3.5 segundos
-                maxDragons = 3;
-                break;
-        }
-
-        if (_dragonTimer >= interval)
-        {
-            _dragonTimer = 0;
-
-            int dragonType = ModContent.ProjectileType<ThornDragonProjectile>();
-            int currentDragons = 0;
-            for (int i = 0; i < Main.maxProjectiles; i++)
-            {
-                Projectile p = Main.projectile[i];
-                if (p.active && p.type == dragonType)
-                    currentDragons++;
-            }
-
-            if (currentDragons < maxDragons)
-            {
-                Vector2 toTarget = target.Center - NPC.Center;
-                if (toTarget != Vector2.Zero)
-                    toTarget.Normalize();
-                else
-                    toTarget = new Vector2(0f, 1f);
-
-                toTarget *= 14f;
-
-                Projectile.NewProjectile(
-                    NPC.GetSource_FromAI(),
-                    NPC.Center,
-                    toTarget,
-                    dragonType,
-                    ThornDragonProjectile.ThornDragonDamage,
-                    4f,
-                    Main.myPlayer
-                );
-
-                SoundEngine.PlaySound(
-                    SoundID.ForceRoar with { Pitch = 0.15f, Volume = 0.9f },
-                    NPC.Center
-                );
-            }
-        }
     }
 
     // =========================================================================
-    // ANIMAÇÃO E EFEITOS VISUAIS
+    // ANIMAÇÃO FLUIDA E EFEITOS VISUAIS
     // =========================================================================
 
     private void UpdateAnimation()
     {
         NPC.frameCounter++;
+        // Velocidades de transição mais rápidas para eliminar a rigidez
         int speed = CurrentPhase switch
         {
-            BossPhase.Phase3_Cataclysm => 3,
-            BossPhase.Phase2_Gale => 4,
-            _ => 5
+            BossPhase.Phase3_Cataclysm => 2,
+            BossPhase.Phase2_Gale => 3,
+            _ => 4
         };
 
         if (NPC.frameCounter >= speed)
@@ -524,7 +555,6 @@ public class ThornStormBoss : ModNPC
 
     private void SpawnStormDust()
     {
-        // Partículas atmosféricas do boss: tornado vermelho carmesim, fogo, sangue e eletricidade
         if (Main.rand.NextBool(2))
         {
             Vector2 offset = new(
@@ -548,7 +578,7 @@ public class ThornStormBoss : ModNPC
                 Main.rand.NextFloat(-3f, 1f),
                 100,
                 default,
-                Main.rand.NextFloat(1.3f, 2.0f)
+                Main.rand.NextFloat(1.4f, 2.2f)
             );
             dust.noGravity = true;
         }
@@ -566,22 +596,25 @@ public class ThornStormBoss : ModNPC
         int frameHeight = texture.Height / FrameCount;
         Rectangle frame = new Rectangle(0, _frameIndex * frameHeight, texture.Width, frameHeight);
         Vector2 origin = frame.Size() / 2f;
-        Vector2 drawPosition = NPC.Center - screenPos;
 
-        // Pulso suave conforme a intensidade da tempestade
-        float pulse = (float)Math.Sin(Main.GlobalTimeWrappedHourly * 5f) * 0.12f;
-        float baseScale = 1.35f + pulse;
+        // Flutuação orgânica contínua vertical
+        float floatOffset = (float)Math.Sin(Main.GlobalTimeWrappedHourly * 4.5f) * 8f;
+        Vector2 drawPosition = NPC.Center - screenPos + new Vector2(0f, floatOffset);
+
+        // Pulso suave conforme a intensidade da tempestade com baseScale aumentada (~2.05f)
+        float pulse = (float)Math.Sin(Main.GlobalTimeWrappedHourly * 5.5f) * 0.14f;
+        float baseScale = 2.05f + pulse;
 
         // Trilha de sombras e distorção de vento (afterimages) para fases 2 e 3
         if (CurrentPhase != BossPhase.Phase1_Gathering)
         {
-            int trailCount = CurrentPhase == BossPhase.Phase3_Cataclysm ? 5 : 3;
+            int trailCount = CurrentPhase == BossPhase.Phase3_Cataclysm ? 6 : 4;
             for (int i = 1; i <= trailCount; i++)
             {
-                Vector2 trailPos = (NPC.oldPos.Length > i && NPC.oldPos[i] != Vector2.Zero ? NPC.oldPos[i] + NPC.Size / 2f : NPC.Center) - screenPos;
+                Vector2 trailPos = (NPC.oldPos.Length > i && NPC.oldPos[i] != Vector2.Zero ? NPC.oldPos[i] + NPC.Size / 2f : NPC.Center) - screenPos + new Vector2(0f, floatOffset);
                 Color trailColor = (CurrentPhase == BossPhase.Phase3_Cataclysm
-                    ? new Color(255, 40, 40, 0)
-                    : new Color(220, 80, 50, 0)) * ((trailCount - i) / (float)trailCount * 0.45f);
+                    ? new Color(255, 30, 30, 0)
+                    : new Color(220, 75, 45, 0)) * ((trailCount - i) / (float)trailCount * 0.45f);
 
                 spriteBatch.Draw(
                     texture,
@@ -590,7 +623,7 @@ public class ThornStormBoss : ModNPC
                     trailColor,
                     NPC.rotation,
                     origin,
-                    baseScale * 0.95f,
+                    baseScale * 0.96f,
                     SpriteEffects.None,
                     0f
                 );
@@ -607,7 +640,7 @@ public class ThornStormBoss : ModNPC
 
         for (int i = 0; i < 4; i++)
         {
-            Vector2 offset = (i * MathHelper.PiOver2).ToRotationVector2() * (3f + pulse * 4f);
+            Vector2 offset = (i * MathHelper.PiOver2).ToRotationVector2() * (4f + pulse * 5f);
             spriteBatch.Draw(
                 texture,
                 drawPosition + offset,
@@ -644,7 +677,19 @@ public class ThornStormBoss : ModNPC
 
     public override void ModifyNPCLoot(NPCLoot npcLoot)
     {
-        // Recompensa especial do boss: Montaria do Dragão do Cultista
+        // 1. Bolsa do Tesouro (Boss Bag)
+        // Regra padrão de BossBag para Expert/Master
+        npcLoot.Add(ItemDropRule.BossBag(ModContent.ItemType<ThornStormBossBag>()));
+
+        // Regra garantida para o modo clássico (NotExpert) para que o jogador sempre obtenha a bolsa ao vencer
+        LeadingConditionRule notExpertRule = new(new Conditions.NotExpert());
+        notExpertRule.OnSuccess(ItemDropRule.Common(ModContent.ItemType<ThornStormBossBag>()));
+        npcLoot.Add(notExpertRule);
+
+        // 2. Troféu do Boss (10% de chance de drop direto)
+        npcLoot.Add(ItemDropRule.Common(ModContent.ItemType<ThornStormBossTrophy>(), 10));
+
+        // 3. Recompensas diretas clássicas
         npcLoot.Add(ItemDropRule.Common(ModContent.ItemType<DragonMountItem>()));
     }
 
@@ -669,29 +714,29 @@ public class ThornStormBoss : ModNPC
         );
 
         // Grande explosão de partículas carmesim e tempestade
-        for (int i = 0; i < 60; i++)
+        for (int i = 0; i < 70; i++)
         {
-            Vector2 velocity = Main.rand.NextVector2Circular(9f, 9f);
+            Vector2 velocity = Main.rand.NextVector2Circular(10f, 10f);
             Dust.NewDustPerfect(
                 NPC.Center,
                 DustID.CrimsonTorch,
                 velocity,
                 100,
                 default,
-                Main.rand.NextFloat(1.4f, 2.2f)
+                Main.rand.NextFloat(1.5f, 2.4f)
             );
 
             Dust.NewDustPerfect(
                 NPC.Center,
                 DustID.Blood,
-                velocity * 0.8f,
+                velocity * 0.85f,
                 100,
                 default,
-                Main.rand.NextFloat(1.2f, 1.8f)
+                Main.rand.NextFloat(1.2f, 2.0f)
             );
         }
 
-        // Drop garantido (100%) da recompensa do evento: Poder do Dragão
+        // Drop garantido (100%) da recompensa do evento: Poder do Dragão (Adaga de Espinhos)
         Item.NewItem(NPC.GetSource_Loot(), NPC.getRect(), ModContent.ItemType<DragonPower>());
 
         // Notifica o sistema do evento sobre a vitória

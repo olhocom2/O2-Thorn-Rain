@@ -7,6 +7,42 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [0.4.0] - 2026-09-22
+
+### Adicionado
+- **Bolsa de Tesouro do Boss (`ThornStormBossBag`):**
+  - Item consumível de Boss Bag obtido ao derrotar o Olho da Tempestade de Espinhos.
+  - Tamanho compacto ao cair no chão do mundo (`24x24` hitbox, sprite proporcional `32x32`).
+  - Funcionalidade completa de bolsa do tesouro vanilla: abertura via clique com o botão direito no inventário.
+  - Drop garantido de **1 Moeda de Platina** e **50 Moedas de Ouro**, além dos itens da montaria do dragão e chance de obter o troféu do boss.
+- **Troféu do Boss (`ThornStormBossTrophy` & `ThornStormBossTrophyTile`):**
+  - Troféu de parede 3×3 (`54x54` px) fixável em paredes de fundo, conforme o padrão de troféus de bosses do Terraria vanilla.
+  - Dropado pelo boss com 10% de chance direta ou obtido dentro da Bolsa de Tesouro.
+- **Mini Tornados Destruíveis (`ThornMinionTornado`):**
+  - Mobs hostis voadores invocados pelo boss, substituindo os antigos dragões de espinhos.
+  - Reutilizam a identidade visual de tempestade do `ProjectileID.Tempest` (6 frames de animação fluida).
+  - Possuem barra de vida, defesa, reagem a ataques do jogador e podem ser totalmente destruídos.
+  - Escalonamento progressivo de quantidade e velocidade de perseguição conforme as fases do boss.
+- **Barra de Vida Oficial do Boss (`ThornStormBossBar`):**
+  - Implementação de `ModBossBar` com exibição no rodapé da tela acompanhada do nome oficial e ícone de cabeça de boss (`ThornStormBoss_Head_Boss.png`).
+- **Som Característico de Invocação de Boss (`SoundID.Roar`):**
+  - Rugido clássico e inconfundível de boss invocado disparado tanto no evento quanto na inicialização da IA do boss.
+
+### Aprimorado
+- **Escala e Tamanho do Boss Final (`ThornStormBoss`):**
+  - Hitbox ampliada de `170x170` para `240x240`.
+  - Escala visual no `PreDraw` aumentada para `2.05f + pulso` (~340px de diâmetro na tela), tornando o boss verdadeiramente colossal e intimidador.
+- **Fluidez Visual e Animação Orgânica:**
+  - Ciclo de animação dos 8 frames acelerado e suavizado (de 2 a 4 ticks por frame dependendo da fase) para eliminar a sensação de travamento.
+  - Inclinação natural (*velocity tilt*) respondendo dinamicamente à velocidade horizontal no ar.
+  - Flutuação vertical senoidal orgânica e interpolação de sombras e afterimages.
+- **Progressão das 3 Fases de Combate:**
+  - **Fase 1 (100%–70% HP):** Perseguição suave e cadenciada, cortina controlada de 2 espinhos e no máximo 2 mini tornados.
+  - **Fase 2 (70%–40% HP):** Perseguição ágil, rajadas diagonais cruzadas de espinhos, até 4 mini tornados e pequenos dashes aéreos telegrafados a cada 5s.
+  - **Fase 3 (< 40% HP):** Movimento frenético, disparos de espinhos radiais 360° combinados com leques intensos, enxame de até 7 mini tornados velozes e dashes de alta velocidade a cada 2.6s.
+
+---
+
 ## [0.3.0] - 2026-09-22
 
 ### Adicionado
