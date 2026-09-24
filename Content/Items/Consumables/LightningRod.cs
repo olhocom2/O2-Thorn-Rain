@@ -5,11 +5,11 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using O2ThornRain.Common.Systems;
 
-namespace O2ThornRain.Content.Items;
+namespace O2ThornRain.Content.Items.Consumables;
 
 /// <summary>
-/// Item de invocação do evento "A Tempestade dos Quatro".
-/// Ao ser erguido, atrai a fúria dos quatro ventos ancestrais e desperta os tornados pelo mundo.
+/// Summon item for "The Storm of Four" event.
+/// Summons the ancestral four winds and awakens tornadoes across the world.
 /// </summary>
 public class LightningRod : ModItem
 {
@@ -35,7 +35,6 @@ public class LightningRod : ModItem
 
     public override bool CanUseItem(Player player)
     {
-        // Impede uso se o evento já estiver em andamento
         return ThornStormEventSystem.CurrentState == ThornStormEventState.Inactive;
     }
 
@@ -43,7 +42,6 @@ public class LightningRod : ModItem
     {
         if (player.whoAmI == Main.myPlayer)
         {
-            // Efeito sonoro adicional de trovão
             SoundEngine.PlaySound(
                 SoundID.Item122 with
                 {
@@ -53,7 +51,6 @@ public class LightningRod : ModItem
                 player.Center
             );
 
-            // Partículas elétricas e carmesim ao erguer o para-raios
             for (int i = 0; i < 30; i++)
             {
                 Vector2 dustVel = Main.rand.NextVector2Circular(6f, 6f);
@@ -85,7 +82,6 @@ public class LightningRod : ModItem
 
     public override void AddRecipes()
     {
-        // Receita acessível para testes e conveniência
         CreateRecipe(5)
             .AddIngredient(ItemID.DirtBlock, 1)
             .Register();

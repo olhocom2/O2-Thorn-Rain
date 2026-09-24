@@ -3,13 +3,13 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using O2ThornRain.Content.Mounts;
 
-namespace O2ThornRain.Content.Items;
+namespace O2ThornRain.Content.Items.Mounts;
 
 /// <summary>
-/// Item de invocação da montaria do Dragão do Cultista, obtido exclusivamente como drop do boss final.
-/// Invoca o dragão celestial que concede voo livre infinito e imunidade aos espinhos da Thorn Rain.
+/// Mount summon item for the storm dragon, obtained from the boss bag.
+/// Grants free flight and immunity to Thorn Rain spikes.
 /// </summary>
-public class DragonMountItem : ModItem
+public class DragonPower : ModItem
 {
     public override void SetDefaults()
     {
@@ -18,7 +18,7 @@ public class DragonMountItem : ModItem
         Item.useTime = 20;
         Item.useAnimation = 20;
         Item.useStyle = ItemUseStyleID.HoldUp;
-        Item.value = Item.buyPrice(gold: 25);
+        Item.value = Item.buyPrice(gold: 20);
         Item.rare = ItemRarityID.Cyan;
         Item.UseSound = SoundID.Item122;
         Item.noMelee = true;

@@ -3,11 +3,10 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using O2ThornRain.Content.Tiles;
 
-namespace O2ThornRain.Content.Items;
+namespace O2ThornRain.Content.Items.Placeables;
 
 /// <summary>
-/// Item do troféu do boss Olho da Tempestade de Espinhos.
-/// Pode ser colocado em paredes como decoração memorial de conquista.
+/// Wall trophy item for defeating the Eye of the Thorn Storm boss.
 /// </summary>
 public class ThornStormBossTrophy : ModItem
 {

@@ -3,13 +3,13 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using O2ThornRain.Content.Mounts;
 
-namespace O2ThornRain.Content.Items;
+namespace O2ThornRain.Content.Items.Mounts;
 
 /// <summary>
-/// Item de invocação da montaria "Poder do Dragão", obtido ao derrotar o Boss final.
-/// Invoca o dragão da tempestade que concede voo livre e imunidade aos espinhos da Thorn Rain.
+/// Mount summon item for the celestial cultist dragon.
+/// Grants infinite flight, high agility, and immunity to Thorn Rain spikes.
 /// </summary>
-public class DragonPower : ModItem
+public class DragonMountItem : ModItem
 {
     public override void SetDefaults()
     {
@@ -18,7 +18,7 @@ public class DragonPower : ModItem
         Item.useTime = 20;
         Item.useAnimation = 20;
         Item.useStyle = ItemUseStyleID.HoldUp;
-        Item.value = Item.buyPrice(gold: 20);
+        Item.value = Item.buyPrice(gold: 25);
         Item.rare = ItemRarityID.Cyan;
         Item.UseSound = SoundID.Item122;
         Item.noMelee = true;
