@@ -9,16 +9,16 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using O2ThornRain.Common.Systems;
 using O2ThornRain.Content.BossBars;
-using O2ThornRain.Content.Items;
+using O2ThornRain.Content.Items.Consumables;
+using O2ThornRain.Content.Items.Placeables;
+using O2ThornRain.Content.NPCs.Minions;
 using O2ThornRain.Content.Projectiles;
 
-namespace O2ThornRain.Content.NPCs;
+namespace O2ThornRain.Content.NPCs.Boss;
 
 /// <summary>
-/// Boss final do evento "A Tempestade dos Quatro".
-/// Um tornado colossal carmesim/vermelho que persegue e pressiona o jogador,
-/// possui 3 fases de combate de acordo com sua vida, desfere chuvas de espinhos,
-/// invoca mini tornados destruíveis e dropa a Bolsa do Tesouro e o Troféu ao ser derrotado.
+/// Final boss of "The Storm of Four" event.
+/// A massive crimson tornado with 3 combat phases, aggressive chases, and projectile barrages.
 /// </summary>
 [AutoloadBossHead]
 public class ThornStormBoss : ModNPC
@@ -26,13 +26,21 @@ public class ThornStormBoss : ModNPC
     private const int FrameCount = 8;
     private int _frameIndex;
 
-    // Fases de combate
     public enum BossPhase
     {
-        Phase1_Gathering,   // 100% - 70% HP: Perseguição suave, espinhos controlados, poucos mini tornados
-        Phase2_Gale,        // 70% - 40% HP: Velocidade aumentada, pequenos dashes, mais mini tornados
-        Phase3_Cataclysm    // < 40% HP: Dashes frenéticos, tempestade de espinhos 360°, enxame de mini tornados
+        Phase1_Gathering,
+        Phase2_Gale,
+        Phase3_Cataclysm
     }
+
+    private readonly record struct PhaseConfig(float MaxSpeedX, float AccelX, float HoverOffsetY);
+
+    private static readonly PhaseConfig[] PhaseSettings =
+    [
+        new(MaxSpeedX: 6.0f, AccelX: 0.10f, HoverOffsetY: -380f),
+        new(MaxSpeedX: 11.0f, AccelX: 0.22f, HoverOffsetY: -300f),
+        new(MaxSpeedX: 16.0f, AccelX: 0.40f, HoverOffsetY: -220f)
+    ];
 
     public BossPhase CurrentPhase
     {
@@ -47,28 +55,19 @@ public class ThornStormBoss : ModNPC
         }
     }
 
-    /// <summary>
-    /// Multiplicador dinâmico de velocidade e agressividade conforme a dificuldade do mundo.
-    /// Normal: 1.0x | Expert: 1.12x | Master: 1.24x | Legendary/FTW: 1.38x.
-    /// </summary>
     private static float DifficultySpeedMultiplier =>
         Main.getGoodWorld ? 1.38f :
         Main.masterMode ? 1.24f :
         Main.expertMode ? 1.12f : 1.0f;
 
-    /// <summary>
-    /// Redução dinâmica dos tempos de recarga e intervalos de ataque/dashes conforme a dificuldade.
-    /// Normal: 1.0x | Expert: 0.88x | Master: 0.78x | Legendary/FTW: 0.68x.
-    /// </summary>
     private static float DifficultyRateMultiplier =>
         Main.getGoodWorld ? 0.68f :
         Main.masterMode ? 0.78f :
         Main.expertMode ? 0.88f : 1.0f;
 
-    // Variáveis de IA armazenadas nos slots de AI do NPC para sincronização multiplayer
     private ref float AttackTimer => ref NPC.ai[0];
     private ref float ChargeTimer => ref NPC.ai[1];
-    private ref float ChargeState => ref NPC.ai[2]; // 0: normal, 1: preparando investida, 2: investindo
+    private ref float ChargeState => ref NPC.ai[2];
     private ref float InternalCounter => ref NPC.ai[3];
 
     private int _minionTornadoTimer;
@@ -91,7 +90,6 @@ public class ThornStormBoss : ModNPC
 
     public override void SetDefaults()
     {
-        // Hitbox aumentado em 50% para refletir a escala colossal do boss
         NPC.width = 360;
         NPC.height = 360;
 
@@ -109,36 +107,28 @@ public class ThornStormBoss : ModNPC
 
         NPC.boss = true;
         NPC.friendly = false;
-        // Moedas são concedidas apenas via Boss Bag (Expert/Master).
-        // No modo Clássico, somente Luminita e Troféu caem diretamente.
         NPC.value = 0;
 
-        // Barra de vida oficial do boss
         NPC.BossBar = ModContent.GetInstance<ThornStormBossBar>();
-
         Music = MusicID.Boss2;
     }
 
     public override void ApplyDifficultyAndPlayerScaling(int numPlayers, float balance, float bossAdjustment)
     {
-        // Escala básica de vida considerando multiplayer
         NPC.lifeMax = (int)(NPC.lifeMax * 0.70f * balance * bossAdjustment);
 
         if (Main.masterMode)
         {
-            // Modo Master: vida substancialmente ampliada, dano e defesa reforçados
             NPC.lifeMax = (int)(NPC.lifeMax * 1.35f);
             NPC.damage = 145;
             NPC.defense = 48;
         }
         else if (Main.expertMode)
         {
-            // Modo Expert: dano e defesa moderadamente ampliados
             NPC.damage = 110;
             NPC.defense = 40;
         }
 
-        // Suporte especial para sementes de desafio supremo (For the Worthy / Legendary Mode)
         if (Main.getGoodWorld)
         {
             NPC.lifeMax = (int)(NPC.lifeMax * 1.25f);
@@ -149,17 +139,16 @@ public class ThornStormBoss : ModNPC
 
     public override void OnHitPlayer(Player target, Player.HurtInfo hurtInfo)
     {
-        // Aplica debuffs dinâmicos temáticos de tempestade e espinhos conforme a dificuldade
         if (Main.masterMode)
         {
-            target.AddBuff(BuffID.Bleeding, 480);   // 8s de sangramento profundo
-            target.AddBuff(BuffID.Slow, 120);       // 2s de lentidão por ventos fortes
-            target.AddBuff(BuffID.WindPushed, 180); // 3s de pressão atmosférica
+            target.AddBuff(BuffID.Bleeding, 480);
+            target.AddBuff(BuffID.Slow, 120);
+            target.AddBuff(BuffID.WindPushed, 180);
         }
         else if (Main.expertMode)
         {
-            target.AddBuff(BuffID.Bleeding, 360);   // 6s de sangramento
-            target.AddBuff(BuffID.WindPushed, 120); // 2s de rajada de vento
+            target.AddBuff(BuffID.Bleeding, 360);
+            target.AddBuff(BuffID.WindPushed, 120);
         }
     }
 
@@ -176,18 +165,13 @@ public class ThornStormBoss : ModNPC
 
     public override void AI()
     {
-        // -------------------------------------------------------------
-        // 0. SOM CLÁSSICO DE SPAWN DO BOSS (ROAR) NO PRIMEIRO FRAME
-        // -------------------------------------------------------------
+        // Roar sound on initial spawn
         if (NPC.localAI[3] == 0f)
         {
             NPC.localAI[3] = 1f;
             SoundEngine.PlaySound(SoundID.Roar, NPC.Center);
         }
 
-        // -------------------------------------------------------------
-        // 1. GERENCIAMENTO DE ALVO E DESPAWN QUANDO TODOS MORREM
-        // -------------------------------------------------------------
         if (NPC.target < 0 || NPC.target == 255 || Main.player[NPC.target].dead || !Main.player[NPC.target].active)
         {
             NPC.TargetClosest(true);
@@ -197,7 +181,6 @@ public class ThornStormBoss : ModNPC
 
         if (!targetPlayer.active || targetPlayer.dead)
         {
-            // Todos os jogadores morreram: sobe rapidamente para os céus e desaparece
             NPC.velocity.Y -= 0.6f;
             NPC.velocity.X *= 0.94f;
             NPC.EncourageDespawn(10);
@@ -209,78 +192,36 @@ public class ThornStormBoss : ModNPC
             return;
         }
 
-        // -------------------------------------------------------------
-        // 2. PARTÍCULAS TEMPESTUOSAS
-        // -------------------------------------------------------------
         SpawnStormDust();
 
-        // -------------------------------------------------------------
-        // 3. FASE ATUAL
-        // -------------------------------------------------------------
         BossPhase phase = CurrentPhase;
-
-        // -------------------------------------------------------------
-        // 4. MOVIMENTAÇÃO DE PERSEGUIÇÃO E DASHES POR FASE
-        // -------------------------------------------------------------
         UpdateMovement(targetPlayer, phase);
 
-        // Apenas o servidor gera projéteis e orquestra ataques e summons
         if (Main.netMode == NetmodeID.MultiplayerClient)
             return;
 
-        // -------------------------------------------------------------
-        // 5. INVOÇÃO DE MINI TORNADOS E ATAQUES DE ESPINHOS
-        // -------------------------------------------------------------
         UpdateMinionTornadoes(targetPlayer, phase);
         UpdateAttacks(targetPlayer, phase);
     }
 
-    // =========================================================================
-    // MOVIMENTAÇÃO, PERSEGUIÇÃO E INVESTIDAS (DASHES)
-    // =========================================================================
-
     private void UpdateMovement(Player target, BossPhase phase)
     {
-        // 1. Inclinação orgânica suave acompanhando o movimento lateral
         NPC.rotation = MathHelper.Lerp(NPC.rotation, NPC.velocity.X * 0.025f, 0.12f);
 
-        // 2. Parâmetros dinâmicos de velocidade e agressividade por fase e dificuldade do mundo
         float diffSpeed = DifficultySpeedMultiplier;
         float diffRate = DifficultyRateMultiplier;
 
-        float maxSpeedX;
-        float accelX;
-        float hoverOffsetY;
+        PhaseConfig cfg = PhaseSettings[(int)phase];
+        float maxSpeedX = cfg.MaxSpeedX * diffSpeed;
+        float accelX = cfg.AccelX * diffSpeed;
+        float hoverOffsetY = cfg.HoverOffsetY;
 
-        switch (phase)
+        if (phase == BossPhase.Phase1_Gathering)
         {
-            case BossPhase.Phase1_Gathering:
-                // Fase 1: Perseguição suave e controlada
-                maxSpeedX = 6.0f * diffSpeed;
-                accelX = 0.10f * diffSpeed;
-                hoverOffsetY = -380f; // aumentado para compensar o novo tamanho
-                ChargeState = 0;
-                ChargeTimer = 0;
-                break;
-
-            case BossPhase.Phase2_Gale:
-                // Fase 2: Perseguição ágil com pequenos dashes ocasionais
-                maxSpeedX = 11.0f * diffSpeed;
-                accelX = 0.22f * diffSpeed;
-                hoverOffsetY = -300f; // aumentado para compensar o novo tamanho
-                break;
-
-            case BossPhase.Phase3_Cataclysm:
-            default:
-                // Fase 3: Perseguição frenética e extrema
-                maxSpeedX = 16.0f * diffSpeed;
-                accelX = 0.40f * diffSpeed;
-                hoverOffsetY = -220f; // aumentado para compensar o novo tamanho
-                break;
+            ChargeState = 0;
+            ChargeTimer = 0;
         }
-
-        // 3. Sistema de Dashes (Investidas) para Fases 2 e 3
-        if (phase != BossPhase.Phase1_Gathering)
+        else
         {
             ChargeTimer++;
 
@@ -290,7 +231,6 @@ public class ThornStormBoss : ModNPC
 
             if (ChargeState == 0 && ChargeTimer >= chargeInterval)
             {
-                // Inicia aviso/telegraph da investida
                 ChargeState = 1;
                 ChargeTimer = 0;
                 NPC.velocity *= 0.4f;
@@ -298,10 +238,9 @@ public class ThornStormBoss : ModNPC
             }
             else if (ChargeState == 1)
             {
-                // Preparação (aviso com partículas concentradas)
                 for (int d = 0; d < 2; d++)
                 {
-                    Vector2 dustVel = (target.Center - NPC.Center);
+                    Vector2 dustVel = target.Center - NPC.Center;
                     if (dustVel != Vector2.Zero) dustVel.Normalize();
                     Dust.NewDust(NPC.position, NPC.width, NPC.height, DustID.CrimsonTorch, dustVel.X * 4f, dustVel.Y * 4f, 100, default, 1.4f);
                 }
@@ -311,7 +250,7 @@ public class ThornStormBoss : ModNPC
                     ChargeState = 2;
                     ChargeTimer = 0;
 
-                    Vector2 chargeDir = (target.Center - NPC.Center);
+                    Vector2 chargeDir = target.Center - NPC.Center;
                     if (chargeDir != Vector2.Zero)
                         chargeDir.Normalize();
                     else
@@ -326,7 +265,6 @@ public class ThornStormBoss : ModNPC
             }
             else if (ChargeState == 2)
             {
-                // Investindo por 26 ticks
                 if (ChargeTimer >= 26)
                 {
                     ChargeState = 0;
@@ -337,7 +275,6 @@ public class ThornStormBoss : ModNPC
             }
         }
 
-        // 4. Movimento padrão: pairar e pressionar o jogador
         Vector2 targetHoverPos = target.Center + new Vector2(0f, hoverOffsetY);
         Vector2 toTarget = targetHoverPos - NPC.Center;
 
@@ -374,20 +311,20 @@ public class ThornStormBoss : ModNPC
         switch (phase)
         {
             case BossPhase.Phase1_Gathering:
-                baseInterval = 480; // 8s no clássico
+                baseInterval = 480;
                 maxMinions = Main.masterMode ? 4 : (Main.expertMode ? 3 : 2);
                 phaseNumber = 1;
                 break;
 
             case BossPhase.Phase2_Gale:
-                baseInterval = 270; // 4.5s no clássico
+                baseInterval = 270;
                 maxMinions = Main.masterMode ? 8 : (Main.expertMode ? 6 : 4);
                 phaseNumber = 2;
                 break;
 
             case BossPhase.Phase3_Cataclysm:
             default:
-                baseInterval = 180; // 3s no clássico
+                baseInterval = 180;
                 maxMinions = Main.masterMode ? 12 : (Main.expertMode ? 9 : 7);
                 phaseNumber = 3;
                 break;
@@ -442,10 +379,6 @@ public class ThornStormBoss : ModNPC
         }
     }
 
-    // =========================================================================
-    // ATAQUES DE ESPINHOS POR FASE
-    // =========================================================================
-
     private void UpdateAttacks(Player target, BossPhase phase)
     {
         if (SpikesProjectile.ActiveCount >= SpikeRainSystem.MaxGlobalSpikes)
@@ -469,9 +402,7 @@ public class ThornStormBoss : ModNPC
         }
     }
 
-    /// <summary>
-    /// FASE 1: Cortina de espinhos escalonada com a dificuldade (a cada 40-55 ticks).
-    /// </summary>
+    // Phase 1: Vertical spike curtain scaled by difficulty
     private void UpdatePhase1Attacks(Player target)
     {
         int cooldown = Math.Max(25, (int)(55 * DifficultyRateMultiplier));
@@ -506,9 +437,7 @@ public class ThornStormBoss : ModNPC
         }
     }
 
-    /// <summary>
-    /// FASE 2: Rajadas diagonais cruzadas intensificadas no Expert/Master (a cada 20-28 ticks).
-    /// </summary>
+    // Phase 2: Alternating diagonal bursts
     private void UpdatePhase2Attacks(Player target)
     {
         int cooldown = Math.Max(14, (int)(28 * DifficultyRateMultiplier));
@@ -544,9 +473,7 @@ public class ThornStormBoss : ModNPC
         }
     }
 
-    /// <summary>
-    /// FASE 3: Tempestade frenética de espinhos 360° e leques velozes escalonados com a dificuldade.
-    /// </summary>
+    // Phase 3: 360-degree radial ring burst or concentrated spread toward player
     private void UpdatePhase3Attacks(Player target)
     {
         int cooldown = Math.Max(10, (int)(18 * DifficultyRateMultiplier));
@@ -565,7 +492,6 @@ public class ThornStormBoss : ModNPC
 
             if (InternalCounter % 3 == 0)
             {
-                // Disparo radial 360 graus
                 for (int i = 0; i < count; i++)
                 {
                     float angle = i * (MathHelper.TwoPi / desired) + Main.rand.NextFloat(-0.1f, 0.1f);
@@ -584,7 +510,6 @@ public class ThornStormBoss : ModNPC
             }
             else
             {
-                // Leque concentrado na direção do jogador
                 Vector2 toTarget = target.Center - NPC.Center;
                 float targetAngle = toTarget.ToRotation();
 
@@ -672,8 +597,8 @@ public class ThornStormBoss : ModNPC
     {
         Texture2D texture = CurrentPhase switch
         {
-            BossPhase.Phase2_Gale => ModContent.Request<Texture2D>("O2ThornRain/Content/NPCs/ThornStormBoss_Phase2").Value,
-            BossPhase.Phase3_Cataclysm => ModContent.Request<Texture2D>("O2ThornRain/Content/NPCs/ThornStormBoss_Phase3").Value,
+            BossPhase.Phase2_Gale => ModContent.Request<Texture2D>("O2ThornRain/Content/NPCs/Boss/ThornStormBoss_Phase2").Value,
+            BossPhase.Phase3_Cataclysm => ModContent.Request<Texture2D>("O2ThornRain/Content/NPCs/Boss/ThornStormBoss_Phase3").Value,
             _ => TextureAssets.Npc[Type].Value
         };
 
@@ -755,23 +680,17 @@ public class ThornStormBoss : ModNPC
         return false;
     }
 
-    // =========================================================================
-    // MORTE E CONCLUSÃO DO EVENTO
-    // =========================================================================
-
     public override void ModifyNPCLoot(NPCLoot npcLoot)
     {
-        // ─── MODO CLÁSSICO (sem boss bag) ──────────────────────────────
-        // Barras de Luminita garantidas caem diretamente no chão
+        // Classic mode: direct Luminite bar drop
         LeadingConditionRule classicRule = new(new Conditions.NotExpert());
         classicRule.OnSuccess(ItemDropRule.Common(ItemID.LunarBar, 1, 25, 40));
         npcLoot.Add(classicRule);
 
-        // ─── BOSS BAG (Expert / Master / FTW) ─────────────────────────
-        // Bolsa contém moedas, luminita e a montaria DragonPower (% por dificuldade)
+        // Expert / Master / FTW: Boss treasure bag
         npcLoot.Add(ItemDropRule.BossBag(ModContent.ItemType<ThornStormBossBag>()));
 
-        // ─── TROFÉU: 10% de chance de drop direto em qualquer dificuldade ─
+        // Trophy: 10% direct drop on any difficulty
         npcLoot.Add(ItemDropRule.Common(ModContent.ItemType<ThornStormBossTrophy>(), 10));
     }
 
@@ -795,7 +714,6 @@ public class ThornStormBoss : ModNPC
             NPC.Center
         );
 
-        // Grande explosão de partículas carmesim e tempestade
         for (int i = 0; i < 70; i++)
         {
             Vector2 velocity = Main.rand.NextVector2Circular(10f, 10f);
@@ -818,7 +736,6 @@ public class ThornStormBoss : ModNPC
             );
         }
 
-        // Notifica o sistema do evento sobre a vitória (recompensas obtidas exclusivamente via Boss Bag)
         ThornStormEventSystem.OnBossDefeated();
     }
 }

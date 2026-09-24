@@ -9,8 +9,7 @@ using Terraria.ModLoader;
 namespace O2ThornRain.Content.BossBars;
 
 /// <summary>
-/// Barra de vida oficial do boss Olho da Tempestade de Espinhos.
-/// Exibe a barra estilizada de boss no rodapé da tela com o ícone e nome do boss.
+/// Health bar displayed in the HUD for the Eye of the Thorn Storm boss.
 /// </summary>
 public class ThornStormBossBar : ModBossBar
 {

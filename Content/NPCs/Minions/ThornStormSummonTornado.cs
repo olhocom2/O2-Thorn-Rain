@@ -5,12 +5,11 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using O2ThornRain.Common.Systems;
 
-namespace O2ThornRain.Content.NPCs;
+namespace O2ThornRain.Content.NPCs.Minions;
 
 /// <summary>
-/// Mini Tornado especial encontrado no fundo do oceano durante a tempestade (Storm).
-/// É pacífico, estacionário e serve como gatilho do evento "A Tempestade dos Quatro" ao ser destruído.
-/// Reutiliza o sprite do minion Tempest (Sharknado) dropado do Duke Fishron.
+/// Ocean vortex trigger for "The Storm of Four" event.
+/// Peaceful, stationary trigger destroyed by the player to initiate the storm.
 /// </summary>
 public class ThornStormSummonTornado : ModNPC
 {
@@ -54,16 +53,13 @@ public class ThornStormSummonTornado : ModNPC
 
     public override bool CheckActive()
     {
-        // Impede que o NPC desapareça quando o jogador estiver longe
         return false;
     }
 
     public override void AI()
     {
-        // Permanece completamente estacionário
         NPC.velocity = Vector2.Zero;
 
-        // Efeito ambiental sutil de água/vórtice
         if (Main.rand.NextBool(4))
         {
             Dust dust = Dust.NewDustDirect(
@@ -98,7 +94,6 @@ public class ThornStormSummonTornado : ModNPC
 
     public override void OnKill()
     {
-        // Efeito sonoro do vórtice rompendo
         SoundEngine.PlaySound(
             SoundID.Item122 with
             {
@@ -108,7 +103,6 @@ public class ThornStormSummonTornado : ModNPC
             NPC.Center
         );
 
-        // Explosão de água e bolhas
         for (int i = 0; i < 20; i++)
         {
             Vector2 velocity = Main.rand.NextVector2Circular(4f, 4f);
@@ -122,7 +116,6 @@ public class ThornStormSummonTornado : ModNPC
             );
         }
 
-        // Inicia o evento A Tempestade dos Quatro no servidor
         ThornStormEventSystem.StartEvent();
     }
 }

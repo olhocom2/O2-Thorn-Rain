@@ -10,12 +10,11 @@ using O2ThornRain.Common.Systems;
 using O2ThornRain.Content.BossBars;
 using O2ThornRain.Content.Projectiles;
 
-namespace O2ThornRain.Content.NPCs;
+namespace O2ThornRain.Content.NPCs.Pillars;
 
 /// <summary>
-/// Tornado ancestral estacionário associado a um dos 4 biomas (Selva, Neve, Deserto, Corrupção).
-/// Possui vida própria, causa dano por contato físico, dispara espinhos com padrões distintos por bioma
-/// e não destrói blocos nem se move pelo cenário.
+/// Stationary ancestral biome tornado pillar (Jungle, Snow, Desert, Corruption).
+/// Features independent health, contact damage, and biome-specific spike attack patterns.
 /// </summary>
 public class ThornBiomeTornado : ModNPC
 {
@@ -39,8 +38,6 @@ public class ThornBiomeTornado : ModNPC
             Hide = true
         };
         NPCID.Sets.NPCBestiaryDrawOffset.Add(Type, drawModifiers);
-        // O marcador de boss no mapa é adicionado automaticamente pelo engine
-        // quando NPC.boss = true em SetDefaults().
     }
 
     public override void SetDefaults()
@@ -60,7 +57,7 @@ public class ThornBiomeTornado : ModNPC
         NPC.noTileCollide = true;
         NPC.aiStyle = -1;
 
-        // Tratado como mini-boss para exibir barra de vida no HUD e marcador no mapa
+        // Treated as mini-boss for HUD bar and map icon
         NPC.boss = true;
         NPC.friendly = false;
         NPC.BossBar = ModContent.GetInstance<ThornBiomeTornadoBar>();
@@ -68,16 +65,13 @@ public class ThornBiomeTornado : ModNPC
 
     public override bool CheckActive()
     {
-        // Impede que os tornados de bioma desapareçam quando o jogador estiver longe
         return false;
     }
 
     public override void AI()
     {
-        // Permanece estacionário no local de spawn
         NPC.velocity = Vector2.Zero;
 
-        // Animação de rotação suave dos frames
         NPC.frameCounter++;
         if (NPC.frameCounter >= AnimationSpeed)
         {
@@ -89,14 +83,11 @@ public class ThornBiomeTornado : ModNPC
             }
         }
 
-        // Partículas temáticas ao redor do corpo
         SpawnBiomeDust();
 
-        // O servidor controla o disparo dos projéteis
         if (Main.netMode == NetmodeID.MultiplayerClient)
             return;
 
-        // Ataques periódicos com respeito estrito ao limite global de espinhos
         if (SpikesProjectile.ActiveCount >= SpikeRainSystem.MaxGlobalSpikes)
             return;
 
@@ -122,16 +113,9 @@ public class ThornBiomeTornado : ModNPC
         }
     }
 
-    // =========================================================
-    // PADRÕES DE ATAQUE DISTINTOS POR BIOMA
-    // =========================================================
-
-    /// <summary>
-    /// SELVA: Ataques predominantemente verticais e chuva concentrada.
-    /// </summary>
+    // Jungle: vertical burst in tight spread
     private void UpdateJungleAttacks()
     {
-        // A cada 45 ticks (0,75s), lança rajada para cima em leque fechado
         if (AttackTimer >= 45)
         {
             AttackTimer = 0;
@@ -160,12 +144,9 @@ public class ThornBiomeTornado : ModNPC
         }
     }
 
-    /// <summary>
-    /// NEVE: Espinhos velozes com rajadas horizontais e diagonais.
-    /// </summary>
+    // Snow: fast diagonal and horizontal bursts
     private void UpdateSnowAttacks()
     {
-        // A cada 35 ticks (aprox. 0,6s), dispara rajadas rápidas diagonais/laterais
         if (AttackTimer >= 35)
         {
             AttackTimer = 0;
@@ -197,12 +178,9 @@ public class ThornBiomeTornado : ModNPC
         }
     }
 
-    /// <summary>
-    /// DESERTO: Explosões radiais em 360 graus em campo aberto.
-    /// </summary>
+    // Desert: 360-degree radial ring burst
     private void UpdateDesertAttacks()
     {
-        // A cada 60 ticks (1 segundo), dispara uma estrela radial de 6 espinhos
         if (AttackTimer >= 60)
         {
             AttackTimer = 0;
@@ -232,12 +210,9 @@ public class ThornBiomeTornado : ModNPC
         }
     }
 
-    /// <summary>
-    /// CORRUPÇÃO: Cadência imprevisível e rajadas alternadas.
-    /// </summary>
+    // Corruption: alternating cadences and asymmetrical angles
     private void UpdateCorruptionAttacks()
     {
-        // Alterna entre intervalo curto (25 ticks) e longo (55 ticks)
         float targetInterval = (InternalCounter % 2 == 0) ? 25f : 55f;
 
         if (AttackTimer >= targetInterval)
@@ -251,7 +226,6 @@ public class ThornBiomeTornado : ModNPC
 
             for (int i = 0; i < count; i++)
             {
-                // Ângulo oscilante e assimétrico
                 float baseAngle = (InternalCounter % 2 == 0) ? -60f : 120f;
                 float angle = MathHelper.ToRadians(baseAngle + Main.rand.NextFloat(-35f, 35f));
                 float speed = Main.rand.NextFloat(11f, 16f);
@@ -269,38 +243,19 @@ public class ThornBiomeTornado : ModNPC
         }
     }
 
-    // =========================================================
-    // VISUAL E PARTÍCULAS
-    // =========================================================
-
     private void SpawnBiomeDust()
     {
         if (!Main.rand.NextBool(3))
             return;
 
-        int dustType;
-        switch (Biome)
+        int dustType = Biome switch
         {
-            case TornadoBiome.Jungle:
-                dustType = DustID.JungleSpore;
-                break;
-
-            case TornadoBiome.Snow:
-                dustType = DustID.Ice;
-                break;
-
-            case TornadoBiome.Desert:
-                dustType = DustID.Sand;
-                break;
-
-            case TornadoBiome.Corruption:
-                dustType = DustID.Demonite;
-                break;
-
-            default:
-                dustType = DustID.Water;
-                break;
-        }
+            TornadoBiome.Jungle => DustID.JungleSpore,
+            TornadoBiome.Snow => DustID.Ice,
+            TornadoBiome.Desert => DustID.Sand,
+            TornadoBiome.Corruption => DustID.Demonite,
+            _ => DustID.Water
+        };
 
         Vector2 offset = new(
             Main.rand.NextFloat(-NPC.width * 0.45f, NPC.width * 0.45f),
@@ -335,7 +290,6 @@ public class ThornBiomeTornado : ModNPC
         Vector2 origin = frame.Size() / 2f;
         Vector2 drawPosition = NPC.Center - screenPos;
 
-        // Coloração temática sutil por bioma
         Color biomeTint = Biome switch
         {
             TornadoBiome.Jungle => new Color(110, 240, 150),
@@ -347,7 +301,6 @@ public class ThornBiomeTornado : ModNPC
 
         Color finalColor = NPC.GetAlpha(biomeTint * 0.85f);
 
-        // Desenha camadas sobrepostas para dar densidade visual à coluna
         for (int i = 0; i < 6; i++)
         {
             float verticalOffset = (i - 2.5f) * 45f;
@@ -369,10 +322,6 @@ public class ThornBiomeTornado : ModNPC
         return false;
     }
 
-    // =========================================================
-    // FINALIZAÇÃO E REGISTRO
-    // =========================================================
-
     public override void OnKill()
     {
         SoundEngine.PlaySound(
@@ -384,7 +333,6 @@ public class ThornBiomeTornado : ModNPC
             NPC.Center
         );
 
-        // Dispersão de partículas temáticas
         for (int i = 0; i < 25; i++)
         {
             Vector2 velocity = Main.rand.NextVector2Circular(5f, 5f);
@@ -398,7 +346,6 @@ public class ThornBiomeTornado : ModNPC
             );
         }
 
-        // Notifica o sistema do evento da derrota deste tornado
         ThornStormEventSystem.RegisterTornadoDefeated(Biome);
     }
 }

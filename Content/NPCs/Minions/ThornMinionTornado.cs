@@ -4,14 +4,13 @@ using Terraria;
 using Terraria.Audio;
 using Terraria.ID;
 using Terraria.ModLoader;
+using O2ThornRain.Content.NPCs.Boss;
 
-namespace O2ThornRain.Content.NPCs;
+namespace O2ThornRain.Content.NPCs.Minions;
 
 /// <summary>
-/// Mini tornado hostil invocado pelo boss Olho da Tempestade de Espinhos.
-/// Persegue o jogador ativamente, recebe dano e pode ser destruído pelo jogador.
-/// Possui velocidade e agressividade escalonadas de acordo com a fase do boss.
-/// Reutiliza o sprite de tempestade do Tempest/Sharknado.
+/// Hostile mini-tornado minion spawned by the Eye of the Thorn Storm boss.
+/// Actively tracks and attacks the target player, scaling in speed with boss phases.
 /// </summary>
 public class ThornMinionTornado : ModNPC
 {
@@ -21,9 +20,7 @@ public class ThornMinionTornado : ModNPC
     private const int FrameCount = 6;
     private const int AnimationSpeed = 4;
 
-    // Slot ai[0]: Fase do Boss (1 = Inicial, 2 = Fúria, 3 = Cataclismo)
     private ref float Phase => ref NPC.ai[0];
-    // Slot ai[1]: Índice do boss pai para verificação de liveness
     private ref float ParentBossIndex => ref NPC.ai[1];
 
     public override void SetStaticDefaults()
@@ -78,7 +75,7 @@ public class ThornMinionTornado : ModNPC
     {
         if (Main.expertMode)
         {
-            target.AddBuff(BuffID.Bleeding, 240); // 4s de sangramento no Expert/Master
+            target.AddBuff(BuffID.Bleeding, 240);
         }
     }
 
@@ -94,7 +91,7 @@ public class ThornMinionTornado : ModNPC
 
     public override void AI()
     {
-        // 1. Verificação do Boss Pai: se o boss foi derrotado ou sumiu, dissipa o minion
+        // 1. Verify parent boss validity
         int bossIdx = (int)ParentBossIndex;
         int bossType = ModContent.NPCType<ThornStormBoss>();
         if (bossIdx < 0 || bossIdx >= Main.maxNPCs || !Main.npc[bossIdx].active || Main.npc[bossIdx].type != bossType)
@@ -103,7 +100,7 @@ public class ThornMinionTornado : ModNPC
             return;
         }
 
-        // 2. Alvo do jogador
+        // 2. Target player
         if (NPC.target < 0 || NPC.target == 255 || Main.player[NPC.target].dead || !Main.player[NPC.target].active)
         {
             NPC.TargetClosest(true);
@@ -116,25 +113,20 @@ public class ThornMinionTornado : ModNPC
             return;
         }
 
-        // 3. Velocidade e aceleração conforme a fase do boss e dificuldade do mundo
-        float maxSpeed;
-        float accel;
+        // 3. Movement speed scaling by boss phase & difficulty
+        float maxSpeed = Phase switch
+        {
+            >= 3f => 10.5f,
+            >= 2f => 7.5f,
+            _ => 4.8f
+        };
 
-        if (Phase >= 3f)
+        float accel = Phase switch
         {
-            maxSpeed = 10.5f;
-            accel = 0.26f;
-        }
-        else if (Phase >= 2f)
-        {
-            maxSpeed = 7.5f;
-            accel = 0.16f;
-        }
-        else
-        {
-            maxSpeed = 4.8f;
-            accel = 0.09f;
-        }
+            >= 3f => 0.26f,
+            >= 2f => 0.16f,
+            _ => 0.09f
+        };
 
         float diffMult = Main.masterMode ? 1.25f : (Main.expertMode ? 1.12f : 1.0f);
         maxSpeed *= diffMult;
@@ -152,7 +144,7 @@ public class ThornMinionTornado : ModNPC
             NPC.velocity.Y = MathHelper.Lerp(NPC.velocity.Y, toTarget.Y, accel);
         }
 
-        // 4. Efeitos visuais tempestuosos carmesins
+        // 4. Ambient particles
         if (Main.rand.NextBool(3))
         {
             Dust dust = Dust.NewDustDirect(
@@ -169,7 +161,6 @@ public class ThornMinionTornado : ModNPC
             dust.noGravity = true;
         }
 
-        // Inclinação suave na direção do movimento
         NPC.rotation = NPC.velocity.X * 0.04f;
     }
 

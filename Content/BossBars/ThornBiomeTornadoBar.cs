@@ -2,22 +2,19 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using ReLogic.Content;
 using Terraria;
-using Terraria.GameContent;
 using Terraria.GameContent.UI.BigProgressBar;
 using Terraria.ModLoader;
-using O2ThornRain.Content.NPCs;
+using O2ThornRain.Content.NPCs.Pillars;
 
 namespace O2ThornRain.Content.BossBars;
 
 /// <summary>
-/// Barra de vida exibida no HUD para os pilares de bioma (ThornBiomeTornado).
-/// Exibe vida proporcional ao NPC correspondente sem ícone adicional.
+/// Boss health bar displayed in the HUD for biome pillars (ThornBiomeTornado).
 /// </summary>
 public class ThornBiomeTornadoBar : ModBossBar
 {
     public override Asset<Texture2D> GetIconTexture(ref Rectangle? iconFrame)
     {
-        // Sem ícone dedicado
         return null;
     }
 
