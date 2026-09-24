@@ -11,21 +11,19 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- **Boss Treasure Bag (`ThornStormBossBag`)** — drops in Expert/Master/Journey (power 5+)/FTW worlds. Opens via right-click; grants coins, Luminite bars, and a difficulty-scaled mount chance.
+- **Boss Treasure Bag (`ThornStormBossBag`)** — drops in Expert/Master/Journey/FTW worlds. Opens via right-click; grants coins, Luminite bars, and a difficulty-scaled mount chance.
 - **Boss Trophy (`ThornStormBossTrophy` + tile)** — 3×3 wall trophy, 10% direct drop on any difficulty.
 - **Dragon Mount (`DragonMount` + `DragonMountItem`)** — Spike Dragon visuals, 8-frame animation, crimson + vortex dust particles.
-- **Dragon Power item (`DragonPower`)** — mount summon item; drops inside the boss bag only (Expert 5%, Master 10%, FTW ~14%).
+- **Dragon Power item (`DragonPower`)** — mount summon item; drops inside the boss bag only (Expert/Journey 5%, Master 10%, FTW ~14%).
 - **Lightning Rod (`LightningRod`)** — consumable that triggers "The Storm of Four" event; full multiplayer support.
 - **Dynamic difficulty scaling** — boss HP, damage, defense, speed, and mini-tornado count scale per world mode.
 - **Boss bar (`ThornStormBossBar`)** — HUD bar with head icon and official name.
-- **Pillar boss bars (`ThornBiomeTornadoBar`)** — biome pillars show HP bars in HUD and appear on the minimap.
 - **Boss intro ambient system (`ThornBossIntroSystem`)** — max rain, strong wind, dense clouds, blizzard particles, and dark crimson vignette while boss is alive; fades out on defeat.
 - **Destructible mini-tornados (`ThornMinionTornado`)** — flying mobs summoned by the boss; 6-frame animation, full HP bar, scale with boss phase.
 - **Phase-based boss sprites** — three spritesheet phases, each 8 frames.
 - **Vanilla-style loot model:**
   - Classic: Luminite bars (25–40) + Trophy 10% direct drop.
-  - Expert/Master/FTW: Boss Bag + Trophy 10% direct. Mount inside bag at scaled chance.
-  - Journey: follows Expert rules at power level 5+.
+  - Expert/Master/FTW/Journey: Boss Bag + Trophy 10% direct. Mount inside bag at scaled chance. All items drop normally in Journey mode.
 - **Boss size increased 50%** — hitbox 240 → 360, visual scale 2.05f → 3.07f, hover offsets adjusted per phase.
 
 ### Fixed
