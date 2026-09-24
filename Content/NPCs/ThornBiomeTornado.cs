@@ -7,6 +7,7 @@ using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
 using O2ThornRain.Common.Systems;
+using O2ThornRain.Content.BossBars;
 using O2ThornRain.Content.Projectiles;
 
 namespace O2ThornRain.Content.NPCs;
@@ -38,6 +39,8 @@ public class ThornBiomeTornado : ModNPC
             Hide = true
         };
         NPCID.Sets.NPCBestiaryDrawOffset.Add(Type, drawModifiers);
+        // O marcador de boss no mapa é adicionado automaticamente pelo engine
+        // quando NPC.boss = true em SetDefaults().
     }
 
     public override void SetDefaults()
@@ -57,8 +60,10 @@ public class ThornBiomeTornado : ModNPC
         NPC.noTileCollide = true;
         NPC.aiStyle = -1;
 
-        NPC.boss = false;
+        // Tratado como mini-boss para exibir barra de vida no HUD e marcador no mapa
+        NPC.boss = true;
         NPC.friendly = false;
+        NPC.BossBar = ModContent.GetInstance<ThornBiomeTornadoBar>();
     }
 
     public override bool CheckActive()

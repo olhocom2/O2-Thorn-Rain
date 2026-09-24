@@ -36,17 +36,42 @@ public class ThornStormBossBag : ModItem
 
     public override void ModifyItemLoot(ItemLoot itemLoot)
     {
+        // ─── MOEDAS ─────────────────────────────────────────────────
         // 1 Moeda de Platina e 50 Moedas de Ouro garantidas
         itemLoot.Add(ItemDropRule.Common(ItemID.PlatinumCoin, 1, 1, 1));
         itemLoot.Add(ItemDropRule.Common(ItemID.GoldCoin, 1, 50, 50));
 
-        // Barras de Luminita (25 a 40 barras garantidas)
+        // ─── BARRAS DE LUMINITA ──────────────────────────────────────
+        // 25 a 40 barras garantidas
         itemLoot.Add(ItemDropRule.Common(ItemID.LunarBar, 1, 25, 40));
 
-        // Adaga de Espinhos (100% garantida ao abrir a bolsa)
-        itemLoot.Add(ItemDropRule.Common(ModContent.ItemType<DragonPower>()));
+        // ─── MONTARIA (DragonPower) – chance escalonada por dificuldade ─
+        // For the Worthy / Legendary: 15% (1 em 7 aprox.)
+        // Master Mode:                10% (1 em 10)
+        // Expert Mode:                 5% (1 em 20)
+        // (Modo Clássico não recebe bolsa, então não dropa aqui)
 
-        // Troféu do Boss (100% garantido ao abrir a bolsa)
-        itemLoot.Add(ItemDropRule.Common(ModContent.ItemType<ThornStormBossTrophy>()));
+        // FTW tem prioridade: getGoodWorld sobrepõe masterMode
+        // Usa um drop rule encadeado para FTW/Master/Expert
+        // FTW/Legendary: ~14% | Master: 10% | Expert: 5%
+        // Nota: cada Leading rule é avaliada independentemente.
+        // FTW cobre também o masterMode, então a ordem importa (FTW primeiro).
+
+        // FTW – condição customizada inline via DropBasedOnMasterMode workaround
+        if (Main.getGoodWorld)
+        {
+            // Mundo FTW: 1 em 7 (~14.3%)
+            itemLoot.Add(ItemDropRule.Common(ModContent.ItemType<DragonPower>(), 7));
+        }
+        else
+        {
+            var masterRule = new LeadingConditionRule(new Conditions.IsMasterMode());
+            masterRule.OnSuccess(ItemDropRule.Common(ModContent.ItemType<DragonPower>(), 10)); // 10%
+            itemLoot.Add(masterRule);
+
+            var expertRule = new LeadingConditionRule(new Conditions.IsExpert());
+            expertRule.OnSuccess(ItemDropRule.Common(ModContent.ItemType<DragonPower>(), 20)); // 5%
+            itemLoot.Add(expertRule);
+        }
     }
 }

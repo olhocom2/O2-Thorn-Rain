@@ -91,9 +91,9 @@ public class ThornStormBoss : ModNPC
 
     public override void SetDefaults()
     {
-        // Hitbox significativamente maior para refletir a escala imponente do boss
-        NPC.width = 240;
-        NPC.height = 240;
+        // Hitbox aumentado em 50% para refletir a escala colossal do boss
+        NPC.width = 360;
+        NPC.height = 360;
 
         NPC.damage = 75;
         NPC.defense = 34;
@@ -109,7 +109,9 @@ public class ThornStormBoss : ModNPC
 
         NPC.boss = true;
         NPC.friendly = false;
-        NPC.value = Item.buyPrice(gold: 25);
+        // Moedas são concedidas apenas via Boss Bag (Expert/Master).
+        // No modo Clássico, somente Luminita e Troféu caem diretamente.
+        NPC.value = 0;
 
         // Barra de vida oficial do boss
         NPC.BossBar = ModContent.GetInstance<ThornStormBossBar>();
@@ -256,7 +258,7 @@ public class ThornStormBoss : ModNPC
                 // Fase 1: Perseguição suave e controlada
                 maxSpeedX = 6.0f * diffSpeed;
                 accelX = 0.10f * diffSpeed;
-                hoverOffsetY = -260f;
+                hoverOffsetY = -380f; // aumentado para compensar o novo tamanho
                 ChargeState = 0;
                 ChargeTimer = 0;
                 break;
@@ -265,7 +267,7 @@ public class ThornStormBoss : ModNPC
                 // Fase 2: Perseguição ágil com pequenos dashes ocasionais
                 maxSpeedX = 11.0f * diffSpeed;
                 accelX = 0.22f * diffSpeed;
-                hoverOffsetY = -200f;
+                hoverOffsetY = -300f; // aumentado para compensar o novo tamanho
                 break;
 
             case BossPhase.Phase3_Cataclysm:
@@ -273,7 +275,7 @@ public class ThornStormBoss : ModNPC
                 // Fase 3: Perseguição frenética e extrema
                 maxSpeedX = 16.0f * diffSpeed;
                 accelX = 0.40f * diffSpeed;
-                hoverOffsetY = -150f;
+                hoverOffsetY = -220f; // aumentado para compensar o novo tamanho
                 break;
         }
 
@@ -683,9 +685,9 @@ public class ThornStormBoss : ModNPC
         float floatOffset = (float)Math.Sin(Main.GlobalTimeWrappedHourly * 4.5f) * 8f;
         Vector2 drawPosition = NPC.Center - screenPos + new Vector2(0f, floatOffset);
 
-        // Pulso suave conforme a intensidade da tempestade com baseScale aumentada (~2.05f)
+        // Pulso suave conforme a intensidade da tempestade — baseScale +50% (2.05f → 3.07f)
         float pulse = (float)Math.Sin(Main.GlobalTimeWrappedHourly * 5.5f) * 0.14f;
-        float baseScale = 2.05f + pulse;
+        float baseScale = 3.07f + pulse;
 
         // Trilha de sombras e distorção de vento (afterimages) para fases 2 e 3
         if (CurrentPhase != BossPhase.Phase1_Gathering)
@@ -759,16 +761,17 @@ public class ThornStormBoss : ModNPC
 
     public override void ModifyNPCLoot(NPCLoot npcLoot)
     {
-        // 1. Bolsa do Tesouro (Boss Bag)
-        // Regra padrão de BossBag para Expert/Master
+        // ─── MODO CLÁSSICO (sem boss bag) ──────────────────────────────
+        // Barras de Luminita garantidas caem diretamente no chão
+        LeadingConditionRule classicRule = new(new Conditions.NotExpert());
+        classicRule.OnSuccess(ItemDropRule.Common(ItemID.LunarBar, 1, 25, 40));
+        npcLoot.Add(classicRule);
+
+        // ─── BOSS BAG (Expert / Master / FTW) ─────────────────────────
+        // Bolsa contém moedas, luminita e a montaria DragonPower (% por dificuldade)
         npcLoot.Add(ItemDropRule.BossBag(ModContent.ItemType<ThornStormBossBag>()));
 
-        // Regra garantida para o modo clássico (NotExpert) para que o jogador sempre obtenha a bolsa ao vencer
-        LeadingConditionRule notExpertRule = new(new Conditions.NotExpert());
-        notExpertRule.OnSuccess(ItemDropRule.Common(ModContent.ItemType<ThornStormBossBag>()));
-        npcLoot.Add(notExpertRule);
-
-        // 2. Troféu do Boss (10% de chance de drop direto no modo clássico)
+        // ─── TROFÉU: 10% de chance de drop direto em qualquer dificuldade ─
         npcLoot.Add(ItemDropRule.Common(ModContent.ItemType<ThornStormBossTrophy>(), 10));
     }
 
