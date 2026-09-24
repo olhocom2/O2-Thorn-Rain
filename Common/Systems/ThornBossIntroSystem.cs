@@ -2,45 +2,24 @@ using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
-using O2ThornRain.Content.NPCs;
+using O2ThornRain.Content.NPCs.Boss;
 
 namespace O2ThornRain.Common.Systems;
 
 /// <summary>
-/// Gerencia os efeitos ambientais globais enquanto o ThornStormBoss está vivo:
-/// - Céu escurecido e tintado de carmesim
-/// - Chuva máxima (tempestade)
-/// - Vento forte
-/// - Nuvens densas
-/// - Partículas de neve/nevasca espalhadas pela tela (simulam blizzard)
-///
-/// Todos os efeitos são revertidos suavemente quando o boss morre ou foge.
+/// Manages atmospheric effects while the Eye of the Thorn Storm boss is active:
+/// Darkened sky tint, heavy storm rain, high wind, dense clouds, and blizzard particles.
+/// Naturally fades out when the boss is defeated or despawns.
 /// </summary>
 public class ThornBossIntroSystem : ModSystem
 {
-    // =========================================================
-    // ESTADO
-    // =========================================================
-
-    /// <summary>Intensidade atual do efeito (0f = inativo, 1f = pleno).</summary>
     private static float _intensity;
 
-    /// <summary>Velocidade de interpolação de entrada/saída do efeito.</summary>
     private const float FadeInSpeed  = 0.015f;
     private const float FadeOutSpeed = 0.008f;
 
-    // Valores originais salvos para reverter
-    private static float _savedWindSpeedTarget;
-    private static int   _savedNumClouds;
-    private static bool  _effectsApplied;
-
-    // =========================================================
-    // UPDATE
-    // =========================================================
-
     public override void PostUpdateEverything()
     {
-        // Verifica se o boss está ativo no mundo
         bool bossAlive = false;
         int bossType = ModContent.NPCType<ThornStormBoss>();
 
@@ -54,7 +33,6 @@ public class ThornBossIntroSystem : ModSystem
             }
         }
 
-        // Fade in / fade out suave
         if (bossAlive)
         {
             _intensity = MathHelper.Clamp(_intensity + FadeInSpeed, 0f, 1f);
@@ -64,58 +42,23 @@ public class ThornBossIntroSystem : ModSystem
             _intensity = MathHelper.Clamp(_intensity - FadeOutSpeed, 0f, 1f);
         }
 
-        // Só aplica efeitos no cliente
         if (Main.netMode == NetmodeID.Server)
             return;
 
-        ApplyWorldEffects(bossAlive);
+        ApplyWorldEffects();
     }
 
-    // =========================================================
-    // EFEITOS AMBIENTAIS
-    // =========================================================
-
-    private static void ApplyWorldEffects(bool bossAlive)
+    private static void ApplyWorldEffects()
     {
         if (_intensity <= 0f)
-        {
-            // Efeito completamente revertido
-            if (_effectsApplied)
-            {
-                Main.windSpeedTarget = _savedWindSpeedTarget;
-                Main.numClouds       = _savedNumClouds;
-                _effectsApplied      = false;
-            }
             return;
-        }
 
-        // Salva valores originais na primeira aplicação
-        if (!_effectsApplied)
-        {
-            _savedWindSpeedTarget = Main.windSpeedTarget;
-            _savedNumClouds       = Main.numClouds;
-            _effectsApplied       = true;
-        }
-
-        // ── CHUVA / TEMPESTADE ────────────────────────────────────────
-        Main.raining    = true;
+        Main.raining = true;
         Main.maxRaining = MathHelper.Lerp(Main.maxRaining, 1f, _intensity * 0.12f);
+        Main.windSpeedTarget = MathHelper.Lerp(Main.windSpeedTarget, 1.5f, _intensity * 0.04f);
+        Main.numClouds = (int)MathHelper.Lerp(Main.numClouds, 200f, _intensity * 0.1f);
 
-        // ── VENTO FORTE ───────────────────────────────────────────────
-        Main.windSpeedTarget = MathHelper.Lerp(
-            _savedWindSpeedTarget,
-            1.5f * (Main.rand.NextBool(4) ? -1f : 1f), // alternância de direção ocasional
-            _intensity * 0.04f
-        );
-
-        // ── NUVENS DENSAS ─────────────────────────────────────────────
-        Main.numClouds = (int)MathHelper.Lerp(_savedNumClouds, 200f, _intensity);
-
-        // ── ESCURECIMENTO DO CÉU ─────────────────────────────────────
-        // Aplica uma tinta escura carmesim sobre a cor do céu
         ApplySkyDarkening();
-
-        // ── PARTÍCULAS DE NEVE (simulação de blizzard) ───────────────
         SpawnBlizzardDust();
     }
 
@@ -190,13 +133,8 @@ public class ThornBossIntroSystem : ModSystem
         }
     }
 
-    // =========================================================
-    // LIMPEZA AO SAIR DO MUNDO
-    // =========================================================
-
     public override void ClearWorld()
     {
-        _intensity      = 0f;
-        _effectsApplied = false;
+        _intensity = 0f;
     }
 }

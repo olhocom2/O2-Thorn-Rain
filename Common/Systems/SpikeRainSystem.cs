@@ -11,7 +11,7 @@ using O2ThornRain.Content.Projectiles;
 namespace O2ThornRain.Common.Systems;
 
 /// <summary>
-/// Níveis de intensidade climática da Thorn Rain.
+/// Weather intensity levels for Thorn Rain.
 /// </summary>
 public enum ThornRainIntensity
 {
@@ -22,84 +22,64 @@ public enum ThornRainIntensity
 }
 
 /// <summary>
-/// Gerencia a mecânica de chuva de espinhos (Thorn Rain),
-/// incluindo o ciclo de intensidade climática, limites globais,
-/// balanceamento por progressão e sincronização multiplayer.
+/// Manages Thorn Rain weather cycles, projectile spawn pacing,
+/// progression damage scaling, and multiplayer synchronization.
 /// </summary>
 public class SpikeRainSystem : ModSystem
 {
-    // =========================================================
-    // INTENSIDADE CLIMÁTICA - CONSTANTES DE BALANCEAMENTO
-    // =========================================================
+    private static class IntensityConfig
+    {
+        internal static class Light
+        {
+            public const int SpawnInterval = 6;
+            public const int SpikesPerCycle = 1;
+            public const float TornadoChance = 0.01f;
+            public const int MinDurationTicks = 1800;
+            public const int MaxDurationTicks = 3600;
+        }
 
-    // LIGHT: Intervalo de 6 ticks, 1 espinho por ciclo, 1% de chance de tornado.
-    public const int LightSpawnInterval = 6;
-    public const int LightSpikesPerCycle = 1;
-    public const float LightTornadoChance = 0.01f;
+        internal static class Normal
+        {
+            public const int SpawnInterval = 3;
+            public const int SpikesPerCycle = 2;
+            public const float TornadoChance = 0.03f;
+            public const int MinDurationTicks = 2400;
+            public const int MaxDurationTicks = 4200;
+        }
 
-    // NORMAL: Intervalo de 3 ticks, 2 espinhos por ciclo, 3% de chance de tornado.
-    public const int NormalSpawnInterval = 3;
-    public const int NormalSpikesPerCycle = 2;
-    public const float NormalTornadoChance = 0.03f;
+        internal static class Heavy
+        {
+            public const int SpawnInterval = 2;
+            public const int SpikesPerCycle = 2;
+            public const float TornadoChance = 0.10f;
+            public const int MinDurationTicks = 1800;
+            public const int MaxDurationTicks = 3000;
+        }
 
-    // HEAVY: Intervalo de 2 ticks, 2 espinhos por ciclo, 10% de chance de tornado.
-    public const int HeavySpawnInterval = 2;
-    public const int HeavySpikesPerCycle = 2;
-    public const float HeavyTornadoChance = 0.10f;
-
-    // STORM: Intervalo de 2 ticks, 3 espinhos por ciclo, 35% de chance de tornado.
-    public const int StormSpawnInterval = 2;
-    public const int StormSpikesPerCycle = 3;
-    public const float StormTornadoChance = 0.35f;
-
-    // =========================================================
-    // DURAÇÃO DAS FASES (TICKS) - 60 ticks = 1 segundo
-    // =========================================================
-
-    public const int LightMinDurationTicks = 1800;   // 30s
-    public const int LightMaxDurationTicks = 3600;   // 60s
-
-    public const int NormalMinDurationTicks = 2400;  // 40s
-    public const int NormalMaxDurationTicks = 4200;  // 70s
-
-    public const int HeavyMinDurationTicks = 1800;   // 30s
-    public const int HeavyMaxDurationTicks = 3000;   // 50s
-
-    public const int StormMinDurationTicks = 1800;   // 30s
-    public const int StormMaxDurationTicks = 3000;   // 50s
-
-    // =========================================================
-    // CONFIGURAÇÃO DA CHUVA
-    // =========================================================
+        internal static class Storm
+        {
+            public const int SpawnInterval = 2;
+            public const int SpikesPerCycle = 3;
+            public const float TornadoChance = 0.35f;
+            public const int MinDurationTicks = 1800;
+            public const int MaxDurationTicks = 3000;
+        }
+    }
 
     public const int MaxGlobalSpikes = 120;
-
     private const int MaxSpikesPerPlayer = 70;
-
     private const float SpawnHorizontalRange = 1000f;
-
     private const float SpawnHeightMin = 550f;
     private const float SpawnHeightMax = 800f;
 
-    // =========================================================
-    // DANO - PRÉ-HARDMODE
-    // =========================================================
-
+    // Progression damage scaling constants
     private const int NormalDamagePreHardmode = 40;
     private const int ExpertDamagePreHardmode = 60;
     private const int MasterDamagePreHardmode = 80;
 
-    // =========================================================
-    // DANO - HARDMODE
-    // =========================================================
-
     private const int NormalDamageHardmode = 55;
     private const int ExpertDamageHardmode = 80;
     private const int MasterDamageHardmode = 105;
-
-    // =========================================================
-    // DANO - PÓS-PLANTERA
-    // =========================================================
 
     private const int NormalDamagePostPlantera = 70;
     private const int ExpertDamagePostPlantera = 100;
@@ -127,9 +107,9 @@ public class SpikeRainSystem : ModSystem
 
     public static ThornRainIntensity CurrentIntensity { get; private set; } = ThornRainIntensity.Normal;
 
-    private static int _intensityDirection = 1; // +1 aumentando em direção a Storm, -1 diminuindo em direção a Light
+    private static int _intensityDirection = 1; // +1 increasing towards Storm, -1 decreasing towards Light
     private static int _intensityTimer;
-    private static int _currentPhaseDuration = NormalMinDurationTicks;
+    private static int _currentPhaseDuration = IntensityConfig.Normal.MinDurationTicks;
 
     private static int _spawnTimer;
 
@@ -141,11 +121,11 @@ public class SpikeRainSystem : ModSystem
     {
         return CurrentIntensity switch
         {
-            ThornRainIntensity.Light => LightSpawnInterval,
-            ThornRainIntensity.Normal => NormalSpawnInterval,
-            ThornRainIntensity.Heavy => HeavySpawnInterval,
-            ThornRainIntensity.Storm => StormSpawnInterval,
-            _ => NormalSpawnInterval
+            ThornRainIntensity.Light => IntensityConfig.Light.SpawnInterval,
+            ThornRainIntensity.Normal => IntensityConfig.Normal.SpawnInterval,
+            ThornRainIntensity.Heavy => IntensityConfig.Heavy.SpawnInterval,
+            ThornRainIntensity.Storm => IntensityConfig.Storm.SpawnInterval,
+            _ => IntensityConfig.Normal.SpawnInterval
         };
     }
 
@@ -153,11 +133,11 @@ public class SpikeRainSystem : ModSystem
     {
         return CurrentIntensity switch
         {
-            ThornRainIntensity.Light => LightSpikesPerCycle,
-            ThornRainIntensity.Normal => NormalSpikesPerCycle,
-            ThornRainIntensity.Heavy => HeavySpikesPerCycle,
-            ThornRainIntensity.Storm => StormSpikesPerCycle,
-            _ => NormalSpikesPerCycle
+            ThornRainIntensity.Light => IntensityConfig.Light.SpikesPerCycle,
+            ThornRainIntensity.Normal => IntensityConfig.Normal.SpikesPerCycle,
+            ThornRainIntensity.Heavy => IntensityConfig.Heavy.SpikesPerCycle,
+            ThornRainIntensity.Storm => IntensityConfig.Storm.SpikesPerCycle,
+            _ => IntensityConfig.Normal.SpikesPerCycle
         };
     }
 
@@ -165,17 +145,13 @@ public class SpikeRainSystem : ModSystem
     {
         return CurrentIntensity switch
         {
-            ThornRainIntensity.Light => LightTornadoChance,
-            ThornRainIntensity.Normal => NormalTornadoChance,
-            ThornRainIntensity.Heavy => HeavyTornadoChance,
-            ThornRainIntensity.Storm => StormTornadoChance,
-            _ => NormalTornadoChance
+            ThornRainIntensity.Light => IntensityConfig.Light.TornadoChance,
+            ThornRainIntensity.Normal => IntensityConfig.Normal.TornadoChance,
+            ThornRainIntensity.Heavy => IntensityConfig.Heavy.TornadoChance,
+            ThornRainIntensity.Storm => IntensityConfig.Storm.TornadoChance,
+            _ => IntensityConfig.Normal.TornadoChance
         };
     }
-
-    // =========================================================
-    // CICLO DE VIDA DO MUNDO
-    // =========================================================
 
     public override void ClearWorld()
     {
@@ -183,12 +159,8 @@ public class SpikeRainSystem : ModSystem
         _intensityDirection = 1;
         _intensityTimer = 0;
         _spawnTimer = 0;
-        _currentPhaseDuration = NormalMinDurationTicks;
+        _currentPhaseDuration = IntensityConfig.Normal.MinDurationTicks;
     }
-
-    // =========================================================
-    // ATUALIZAÇÃO DO MUNDO
-    // =========================================================
 
     public override void PostUpdateWorld()
     {
@@ -196,30 +168,22 @@ public class SpikeRainSystem : ModSystem
         Main.rainTime = 86400;
         Main.maxRaining = 0.8f;
 
-        // O servidor controla intensidade e spawns no multiplayer.
         if (Main.netMode == NetmodeID.MultiplayerClient)
             return;
 
-        // Atualiza a progressão climática.
         UpdateIntensity();
 
         _spawnTimer++;
-
         if (_spawnTimer < GetCurrentSpawnInterval())
             return;
 
         _spawnTimer = 0;
 
-        // Limite global de segurança.
         if (SpikesProjectile.ActiveCount >= MaxGlobalSpikes)
             return;
 
         SpawnSpikes();
     }
-
-    // =========================================================
-    // PROGRESSÃO DA INTENSIDADE
-    // =========================================================
 
     private static void UpdateIntensity()
     {
@@ -275,7 +239,6 @@ public class SpikeRainSystem : ModSystem
         _intensityTimer = 0;
         _currentPhaseDuration = GetNewPhaseDuration(newIntensity);
 
-        // Avisos ao jogador para transições climáticas significativas
         if (newIntensity == ThornRainIntensity.Heavy && previous < ThornRainIntensity.Heavy)
         {
             BroadcastEventMessage(
@@ -291,7 +254,6 @@ public class SpikeRainSystem : ModSystem
             );
         }
 
-        // Sincroniza com os clientes no multiplayer
         SyncIntensity();
     }
 
@@ -304,11 +266,11 @@ public class SpikeRainSystem : ModSystem
     {
         return intensity switch
         {
-            ThornRainIntensity.Light => Main.rand.Next(LightMinDurationTicks, LightMaxDurationTicks + 1),
-            ThornRainIntensity.Normal => Main.rand.Next(NormalMinDurationTicks, NormalMaxDurationTicks + 1),
-            ThornRainIntensity.Heavy => Main.rand.Next(HeavyMinDurationTicks, HeavyMaxDurationTicks + 1),
-            ThornRainIntensity.Storm => Main.rand.Next(StormMinDurationTicks, StormMaxDurationTicks + 1),
-            _ => NormalMinDurationTicks
+            ThornRainIntensity.Light => Main.rand.Next(IntensityConfig.Light.MinDurationTicks, IntensityConfig.Light.MaxDurationTicks + 1),
+            ThornRainIntensity.Normal => Main.rand.Next(IntensityConfig.Normal.MinDurationTicks, IntensityConfig.Normal.MaxDurationTicks + 1),
+            ThornRainIntensity.Heavy => Main.rand.Next(IntensityConfig.Heavy.MinDurationTicks, IntensityConfig.Heavy.MaxDurationTicks + 1),
+            ThornRainIntensity.Storm => Main.rand.Next(IntensityConfig.Storm.MinDurationTicks, IntensityConfig.Storm.MaxDurationTicks + 1),
+            _ => IntensityConfig.Normal.MinDurationTicks
         };
     }
 
@@ -467,16 +429,8 @@ public class SpikeRainSystem : ModSystem
         return count;
     }
 
-    // =========================================================
-    // CÁLCULO DO DANO
-    // =========================================================
-
     public static int GetSpikeDamage()
     {
-        // -----------------------------------------------------
-        // PÓS-MOON LORD
-        // -----------------------------------------------------
-
         if (NPC.downedMoonlord)
         {
             if (Main.masterMode)
@@ -487,10 +441,6 @@ public class SpikeRainSystem : ModSystem
 
             return NormalDamagePostMoonLord;
         }
-
-        // -----------------------------------------------------
-        // PÓS-GOLEM
-        // -----------------------------------------------------
 
         if (NPC.downedGolemBoss)
         {
@@ -503,10 +453,6 @@ public class SpikeRainSystem : ModSystem
             return NormalDamagePostGolem;
         }
 
-        // -----------------------------------------------------
-        // PÓS-PLANTERA
-        // -----------------------------------------------------
-
         if (NPC.downedPlantBoss)
         {
             if (Main.masterMode)
@@ -517,10 +463,6 @@ public class SpikeRainSystem : ModSystem
 
             return NormalDamagePostPlantera;
         }
-
-        // -----------------------------------------------------
-        // HARDMODE
-        // -----------------------------------------------------
 
         if (Main.hardMode)
         {
@@ -533,10 +475,6 @@ public class SpikeRainSystem : ModSystem
             return NormalDamageHardmode;
         }
 
-        // -----------------------------------------------------
-        // PRÉ-HARDMODE
-        // -----------------------------------------------------
-
         if (Main.masterMode)
             return MasterDamagePreHardmode;
 
@@ -546,51 +484,22 @@ public class SpikeRainSystem : ModSystem
         return NormalDamagePreHardmode;
     }
 
-    // =========================================================
-    // CRIAÇÃO DO ESPINHO
-    // =========================================================
-
     private static bool SpawnSpike(Player player)
     {
-        float spawnX =
-            player.Center.X +
-            Main.rand.NextFloat(
-                -SpawnHorizontalRange,
-                SpawnHorizontalRange
-            );
+        float spawnX = player.Center.X + Main.rand.NextFloat(-SpawnHorizontalRange, SpawnHorizontalRange);
+        float spawnY = player.Center.Y - Main.rand.NextFloat(SpawnHeightMin, SpawnHeightMax);
+        Vector2 spawnPosition = new(spawnX, spawnY);
 
-        float spawnY =
-            player.Center.Y -
-            Main.rand.NextFloat(
-                SpawnHeightMin,
-                SpawnHeightMax
-            );
-
-        Vector2 spawnPosition =
-            new(spawnX, spawnY);
-
-        // Evita nascer dentro de blocos.
-        if (Collision.SolidCollision(
-                spawnPosition,
-                14,
-                28))
-        {
+        // Prevent spawning inside solid tiles
+        if (Collision.SolidCollision(spawnPosition, 14, 28))
             return false;
-        }
 
-        // Vento influencia a trajetória.
-        float speedX =
-            Main.windSpeedCurrent * 8f +
-            Main.rand.NextFloat(-1.5f, 1.5f);
+        // Trajectory influenced by active wind
+        float speedX = Main.windSpeedCurrent * 8f + Main.rand.NextFloat(-1.5f, 1.5f);
+        float speedY = Main.rand.NextFloat(12f, 18f);
+        Vector2 velocity = new(speedX, speedY);
 
-        float speedY =
-            Main.rand.NextFloat(12f, 18f);
-
-        Vector2 velocity =
-            new(speedX, speedY);
-
-        int spikeType =
-            ModContent.ProjectileType<SpikesProjectile>();
+        int spikeType = ModContent.ProjectileType<SpikesProjectile>();
 
         Projectile.NewProjectile(
             Entity.GetSource_NaturalSpawn(),

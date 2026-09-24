@@ -10,271 +10,108 @@ using O2ThornRain.Content.Projectiles;
 namespace O2ThornRain.Common.Systems;
 
 /// <summary>
-/// Estados do ciclo de vida do evento Thorn Tornado.
+/// Lifecycle states for the Thorn Tornado event.
 /// </summary>
 public enum TornadoEventState
 {
     None,
-
     Warning,
-
     Active,
-
     Cooldown
 }
 
-
 /// <summary>
-/// Gerencia o ciclo de vida do Thorn Tornado.
-///
-/// O servidor possui autoridade exclusiva sobre:
-/// - transições de estado
-/// - escolha do jogador
-/// - direção
-/// - spawn do tornado
-/// - mensagens multiplayer
+/// Manages the lifecycle of Thorn Tornadoes.
+/// Server-authoritative for state transitions, target selection, and spawning.
 /// </summary>
 public class ThornTornadoSystem : ModSystem
 {
-    // =========================================================
-    // CONFIGURAÇÃO CENTRALIZADA
-    // =========================================================
-
-    // A chance de spawn agora é dinâmica e determinada pela intensidade
-    // da chuva de espinhos em SpikeRainSystem.GetCurrentTornadoChance().
-
-
-    // 600 ticks = 10 segundos.
-    public const int CheckIntervalTicks = 600;
-
-
-    // 150 ticks = 2,5 segundos.
-    public const int WarningSecondMessageDelayTicks = 150;
-
-
-    // 240 ticks = 4 segundos.
-    public const int WarningTotalDurationTicks = 240;
-
-
-    // 3600 ticks = 60 segundos.
-    public const int CooldownDurationTicks = 3600;
-
-
-    // Distância horizontal do jogador.
+    public const int CheckIntervalTicks = 600; // 10 seconds
+    public const int WarningSecondMessageDelayTicks = 150; // 2.5 seconds
+    public const int WarningTotalDurationTicks = 240; // 4 seconds
+    public const int CooldownDurationTicks = 3600; // 60 seconds
     public const float SpawnDistanceX = 1200f;
-
-
-    // =========================================================
-    // DEBUG
-    // =========================================================
 
     public static bool DebugForceTornado;
 
-
-    // =========================================================
-    // ESTADO
-    // =========================================================
-
-    public static TornadoEventState CurrentState
-    {
-        get;
-        private set;
-    } = TornadoEventState.None;
-
+    public static TornadoEventState CurrentState { get; private set; } = TornadoEventState.None;
 
     private static int _stateTimer;
-
     private static int _checkTimer;
-
-
-    // -1 = esquerda
-    // +1 = direita
-    private static float _chosenDirection = 1f;
-
-
-    // Jogador usado como referência.
+    private static float _chosenDirection = 1f; // -1 = left, +1 = right
     private static int _targetPlayerIndex = -1;
-
-
-    // =========================================================
-    // UPDATE
-    // =========================================================
 
     public override void PostUpdateWorld()
     {
-        // Apenas servidor/singleplayer.
-        if (
-            Main.netMode ==
-            NetmodeID.MultiplayerClient
-        )
-        {
+        if (Main.netMode == NetmodeID.MultiplayerClient)
             return;
-        }
-
-
-        // -----------------------------------------------------
-        // DEBUG
-        // -----------------------------------------------------
 
         if (DebugForceTornado)
         {
             DebugForceTornado = false;
-
             StartTornadoWarning();
-
             return;
         }
-
-
-        // -----------------------------------------------------
-        // ESTADO ATUAL
-        // -----------------------------------------------------
 
         switch (CurrentState)
         {
             case TornadoEventState.None:
-
                 UpdateNoneState();
-
                 break;
-
 
             case TornadoEventState.Warning:
-
                 UpdateWarningState();
-
                 break;
-
 
             case TornadoEventState.Active:
-
                 UpdateActiveState();
-
                 break;
 
-
             case TornadoEventState.Cooldown:
-
                 UpdateCooldownState();
-
                 break;
         }
     }
 
-
-    // =========================================================
-    // ESTADO NONE
-    // =========================================================
-
     private static void UpdateNoneState()
     {
-        // Só pode ocorrer durante a chuva.
         if (!Main.raining)
             return;
 
-
         _checkTimer++;
-
-
-        if (
-            _checkTimer <
-            CheckIntervalTicks
-        )
-        {
+        if (_checkTimer < CheckIntervalTicks)
             return;
-        }
-
 
         _checkTimer = 0;
 
-
-        // -----------------------------------------------------
-        // PROCURA JOGADOR
-        // -----------------------------------------------------
-
-        int eligiblePlayer =
-            FindEligibleRainPlayer();
-
-
+        int eligiblePlayer = FindEligibleRainPlayer();
         if (eligiblePlayer < 0)
             return;
 
-
-        // -----------------------------------------------------
-        // CHANCE BASEADA NA INTENSIDADE CLIMÁTICA
-        // -----------------------------------------------------
-
-        float currentTornadoChance =
-            SpikeRainSystem.GetCurrentTornadoChance();
-
-        if (
-            Main.rand.NextFloat() <=
-            currentTornadoChance
-        )
+        float currentTornadoChance = SpikeRainSystem.GetCurrentTornadoChance();
+        if (Main.rand.NextFloat() <= currentTornadoChance)
         {
-            _targetPlayerIndex =
-                eligiblePlayer;
-
-
+            _targetPlayerIndex = eligiblePlayer;
             StartTornadoWarning();
         }
     }
 
-
-    // =========================================================
-    // INICIA AVISO
-    // =========================================================
-
     public static void StartTornadoWarning()
     {
-        CurrentState =
-            TornadoEventState.Warning;
-
-
+        CurrentState = TornadoEventState.Warning;
         _stateTimer = 0;
 
-
-        // Se o jogador não for válido,
-        // procura outro.
-        if (
-            _targetPlayerIndex < 0 ||
-            !IsPlayerValidTarget(
-                _targetPlayerIndex
-            )
-        )
+        if (_targetPlayerIndex < 0 || !IsPlayerValidTarget(_targetPlayerIndex))
         {
-            _targetPlayerIndex =
-                FindEligibleRainPlayer();
+            _targetPlayerIndex = FindEligibleRainPlayer();
         }
 
-
-        // -----------------------------------------------------
-        // DIREÇÃO
-        // -----------------------------------------------------
-
-        _chosenDirection =
-            Main.rand.NextBool()
-                ? 1f
-                : -1f;
-
-
-        // -----------------------------------------------------
-        // MENSAGEM 1
-        // -----------------------------------------------------
+        _chosenDirection = Main.rand.NextBool() ? 1f : -1f;
 
         BroadcastEventMessage(
             "Mods.O2ThornRain.Events.TornadoWarning",
-            new Color(
-                80,
-                200,
-                160
-            )
+            new Color(80, 200, 160)
         );
-
-
-        // -----------------------------------------------------
-        // SOM
-        // -----------------------------------------------------
 
         SoundEngine.PlaySound(
             SoundID.Item121 with
@@ -285,34 +122,16 @@ public class ThornTornadoSystem : ModSystem
         );
     }
 
-
-    // =========================================================
-    // ESTADO WARNING
-    // =========================================================
-
     private static void UpdateWarningState()
     {
         _stateTimer++;
 
-
-        // -----------------------------------------------------
-        // SEGUNDA MENSAGEM
-        // -----------------------------------------------------
-
-        if (
-            _stateTimer ==
-            WarningSecondMessageDelayTicks
-        )
+        if (_stateTimer == WarningSecondMessageDelayTicks)
         {
             BroadcastEventMessage(
                 "Mods.O2ThornRain.Events.TornadoIncoming",
-                new Color(
-                    255,
-                    120,
-                    80
-                )
+                new Color(255, 120, 80)
             );
-
 
             SoundEngine.PlaySound(
                 SoundID.Item122 with
@@ -323,133 +142,60 @@ public class ThornTornadoSystem : ModSystem
             );
         }
 
-
-        // -----------------------------------------------------
-        // SPAWN
-        // -----------------------------------------------------
-
-        if (
-            _stateTimer >=
-            WarningTotalDurationTicks
-        )
+        if (_stateTimer >= WarningTotalDurationTicks)
         {
             SpawnThornTornado();
-
-
-            CurrentState =
-                TornadoEventState.Active;
-
-
+            CurrentState = TornadoEventState.Active;
             _stateTimer = 0;
         }
     }
 
-
-    // =========================================================
-    // ESTADO ACTIVE
-    // =========================================================
-
     private static void UpdateActiveState()
     {
-        int tornadoType =
-            ModContent.ProjectileType<
-                ThornTornadoProjectile
-            >();
-
-
+        int tornadoType = ModContent.ProjectileType<ThornTornadoProjectile>();
         bool tornadoExists = false;
 
-
-        for (
-            int i = 0;
-            i < Main.maxProjectiles;
-            i++
-        )
+        for (int i = 0; i < Main.maxProjectiles; i++)
         {
-            Projectile projectile =
-                Main.projectile[i];
-
-
-            if (
-                projectile.active &&
-                projectile.type ==
-                tornadoType
-            )
+            Projectile projectile = Main.projectile[i];
+            if (projectile.active && projectile.type == tornadoType)
             {
                 tornadoExists = true;
-
                 break;
             }
         }
 
-
-        // -----------------------------------------------------
-        // TERMINOU
-        // -----------------------------------------------------
-
         if (!tornadoExists)
         {
-            CurrentState =
-                TornadoEventState.Cooldown;
-
-
+            CurrentState = TornadoEventState.Cooldown;
             _stateTimer = 0;
-
             _targetPlayerIndex = -1;
         }
     }
-
-
-    // =========================================================
-    // COOLDOWN
-    // =========================================================
 
     private static void UpdateCooldownState()
     {
         _stateTimer++;
 
-
-        if (
-            _stateTimer >=
-            CooldownDurationTicks
-        )
+        if (_stateTimer >= CooldownDurationTicks)
         {
-            CurrentState =
-                TornadoEventState.None;
-
-
+            CurrentState = TornadoEventState.None;
             _stateTimer = 0;
-
             _checkTimer = 0;
         }
     }
 
-
-    // =========================================================
-    // SPAWN DO TORNADO
-    // =========================================================
-
     private static void SpawnThornTornado()
     {
-        Vector2 spawnPosition =
-            GetTornadoSpawnPosition();
-
-
-        int tornadoType =
-            ModContent.ProjectileType<
-                ThornTornadoProjectile
-            >();
-
-
-        int damage =
-            SpikeRainSystem.GetSpikeDamage();
+        Vector2 spawnPosition = GetTornadoSpawnPosition();
+        int tornadoType = ModContent.ProjectileType<ThornTornadoProjectile>();
+        int damage = SpikeRainSystem.GetSpikeDamage();
 
         Projectile.NewProjectile(
             Entity.GetSource_NaturalSpawn(),
             spawnPosition,
             new Vector2(
-                _chosenDirection *
-                ThornTornadoProjectile.HorizontalSpeed,
+                _chosenDirection * ThornTornadoProjectile.HorizontalSpeed,
                 0f
             ),
             tornadoType,
@@ -460,49 +206,22 @@ public class ThornTornadoSystem : ModSystem
         );
     }
 
-
-    // =========================================================
-    // POSIÇÃO DO TORNADO
-    // =========================================================
-
     private static Vector2 GetTornadoSpawnPosition()
     {
         Player targetPlayer = null;
 
-
-        // -----------------------------------------------------
-        // JOGADOR ALVO
-        // -----------------------------------------------------
-
-        if (
-            _targetPlayerIndex >= 0 &&
-            IsPlayerValidTarget(
-                _targetPlayerIndex
-            )
-        )
+        if (_targetPlayerIndex >= 0 && IsPlayerValidTarget(_targetPlayerIndex))
         {
-            targetPlayer =
-                Main.player[
-                    _targetPlayerIndex
-                ];
+            targetPlayer = Main.player[_targetPlayerIndex];
         }
         else
         {
-            int index =
-                FindEligibleRainPlayer();
-
-
+            int index = FindEligibleRainPlayer();
             if (index >= 0)
             {
-                targetPlayer =
-                    Main.player[index];
+                targetPlayer = Main.player[index];
             }
         }
-
-
-        // -----------------------------------------------------
-        // FALLBACK
-        // -----------------------------------------------------
 
         if (targetPlayer == null)
         {
@@ -512,139 +231,48 @@ public class ThornTornadoSystem : ModSystem
             );
         }
 
+        float spawnX = targetPlayer.Center.X - (_chosenDirection * SpawnDistanceX);
+        float spawnY = targetPlayer.Center.Y - 60f;
 
-        // -----------------------------------------------------
-        // POSIÇÃO HORIZONTAL
-        // -----------------------------------------------------
-
-        float spawnX =
-            targetPlayer.Center.X -
-            (
-                _chosenDirection *
-                SpawnDistanceX
-            );
-
-
-        // -----------------------------------------------------
-        // ALTURA
-        // -----------------------------------------------------
-
-        // O centro do tornado fica um pouco acima
-        // do jogador.
-        float spawnY =
-            targetPlayer.Center.Y -
-            60f;
-
-
-        return new Vector2(
-            spawnX,
-            spawnY
-        );
+        return new Vector2(spawnX, spawnY);
     }
-
-
-    // =========================================================
-    // PROCURA JOGADOR
-    // =========================================================
 
     private static int FindEligibleRainPlayer()
     {
-        for (
-            int i = 0;
-            i < Main.maxPlayers;
-            i++
-        )
+        for (int i = 0; i < Main.maxPlayers; i++)
         {
-            if (
-                IsPlayerValidTarget(i)
-            )
+            if (IsPlayerValidTarget(i))
             {
                 return i;
             }
         }
 
-
         return -1;
     }
 
-
-    // =========================================================
-    // VALIDA JOGADOR
-    // =========================================================
-
-    private static bool IsPlayerValidTarget(
-        int playerIndex)
+    private static bool IsPlayerValidTarget(int playerIndex)
     {
-        if (
-            playerIndex < 0 ||
-            playerIndex >= Main.maxPlayers
-        )
-        {
+        if (playerIndex < 0 || playerIndex >= Main.maxPlayers)
             return false;
-        }
 
-
-        Player player =
-            Main.player[playerIndex];
-
-
-        if (
-            !player.active ||
-            player.dead
-        )
-        {
+        Player player = Main.player[playerIndex];
+        if (!player.active || player.dead)
             return false;
-        }
 
-
-        return SpikeRainSystem
-            .IsPlayerInRainZone(player);
+        return SpikeRainSystem.IsPlayerInRainZone(player);
     }
 
-
-    // =========================================================
-    // MENSAGEM
-    // =========================================================
-
-    private static void BroadcastEventMessage(
-        string translationKey,
-        Color color)
+    private static void BroadcastEventMessage(string translationKey, Color color)
     {
-        // -----------------------------------------------------
-        // SINGLEPLAYER
-        // -----------------------------------------------------
-
-        if (
-            Main.netMode ==
-            NetmodeID.SinglePlayer
-        )
+        if (Main.netMode == NetmodeID.SinglePlayer)
         {
-            Main.NewText(
-                Language.GetTextValue(
-                    translationKey
-                ),
-                color
-            );
-
+            Main.NewText(Language.GetTextValue(translationKey), color);
             return;
         }
 
-
-        // -----------------------------------------------------
-        // MULTIPLAYER SERVER
-        // -----------------------------------------------------
-
-        if (
-            Main.netMode ==
-            NetmodeID.Server
-        )
+        if (Main.netMode == NetmodeID.Server)
         {
-            ChatHelper.BroadcastChatMessage(
-                NetworkText.FromKey(
-                    translationKey
-                ),
-                color
-            );
+            ChatHelper.BroadcastChatMessage(NetworkText.FromKey(translationKey), color);
         }
     }
 }

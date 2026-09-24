@@ -6,13 +6,15 @@ using Terraria.Chat;
 using Terraria.ID;
 using Terraria.Localization;
 using Terraria.ModLoader;
-using O2ThornRain.Content.NPCs;
+using O2ThornRain.Content.NPCs.Boss;
+using O2ThornRain.Content.NPCs.Minions;
+using O2ThornRain.Content.NPCs.Pillars;
 using Terraria.Audio;
 
 namespace O2ThornRain.Common.Systems;
 
 /// <summary>
-/// Estados do evento "A Tempestade dos Quatro".
+/// States for the "Storm of the Four" event.
 /// </summary>
 public enum ThornStormEventState : byte
 {
@@ -24,7 +26,7 @@ public enum ThornStormEventState : byte
 }
 
 /// <summary>
-/// Biomas dos quatro tornados ancestrais.
+/// Biomes hosting the four ancestral tornadoes.
 /// </summary>
 public enum TornadoBiome : byte
 {
@@ -35,29 +37,13 @@ public enum TornadoBiome : byte
 }
 
 /// <summary>
-/// Gerencia o ciclo de vida completo do evento "A Tempestade dos Quatro".
-///
-/// Autoridade exclusiva do servidor em multiplayer para:
-/// - Spawn do Mini Tornado de invocação no oceano durante Storm
-/// - Início do evento e spawn dos 4 tornados de bioma
-/// - Rastreamento dos tornados derrotados (0/4 a 4/4)
-/// - Transição para a FinalStorm
+/// Manages the complete lifecycle of "The Storm of the Four" event.
+/// Server-authoritative in multiplayer for spawning, tracking defeated pillars, and boss transition.
 /// </summary>
 public class ThornStormEventSystem : ModSystem
 {
-    // =========================================================
-    // CONSTANTES DE BALANCEAMENTO
-    // =========================================================
-
-    // Intervalo de verificação de spawn do Mini Tornado (300 ticks = 5 segundos)
     private const int SummonCheckIntervalTicks = 300;
-
-    // Chance de tentar o spawn do Mini Tornado a cada verificação durante Storm (15%)
     private const float MiniTornadoSpawnChance = 0.15f;
-
-    // =========================================================
-    // ESTADO DO EVENTO
-    // =========================================================
 
     public static ThornStormEventState CurrentState { get; private set; } = ThornStormEventState.Inactive;
 
@@ -76,10 +62,6 @@ public class ThornStormEventSystem : ModSystem
     private static int _finalStormTimer;
     private static bool _announcedFinalStormWarning;
 
-    // =========================================================
-    // CICLO DE VIDA DO MUNDO
-    // =========================================================
-
     public override void ClearWorld()
     {
         CurrentState = ThornStormEventState.Inactive;
@@ -92,17 +74,11 @@ public class ThornStormEventSystem : ModSystem
         _announcedFinalStormWarning = false;
     }
 
-    // =========================================================
-    // ATUALIZAÇÃO DO MUNDO
-    // =========================================================
-
     public override void PostUpdateWorld()
     {
-        // Apenas servidor e singleplayer tomam decisões sobre o evento.
         if (Main.netMode == NetmodeID.MultiplayerClient)
             return;
 
-        // Se o evento estiver inativo, verifica se o Mini Tornado pode surgir no oceano
         if (CurrentState == ThornStormEventState.Inactive)
         {
             UpdateMiniTornadoSpawnCheck();
@@ -113,31 +89,14 @@ public class ThornStormEventSystem : ModSystem
         }
     }
 
-    // =========================================================
-    // VERIFICAÇÃO DE SPAWN DO MINI TORNADO
-    // =========================================================
-
     private static void UpdateMiniTornadoSpawnCheck()
     {
-        // =========================================================================
-        // MODO DE TESTES: Mini Tornado ativo o tempo todo
-        // (Condições de clima e chance comentadas para permitir spawn imediato em testes)
-        // Descomente o bloco abaixo para restaurar a exigência de chuva e tempestade.
-        // =========================================================================
-        /*
-        // Apenas durante chuva ativa e intensidade Storm
-        if (!Main.raining || SpikeRainSystem.CurrentIntensity != ThornRainIntensity.Storm)
-            return;
-        */
-
         _checkTimer++;
-        // Para testes: verificação rápida (60 ticks = 1 segundo)
-        if (_checkTimer < 60) // Original: SummonCheckIntervalTicks (300 ticks)
+        if (_checkTimer < 60)
             return;
 
         _checkTimer = 0;
 
-        // Verifica se já existe um Mini Tornado ativo no mundo
         int summonNpcType = ModContent.NPCType<ThornStormSummonTornado>();
         for (int i = 0; i < Main.maxNPCs; i++)
         {
@@ -146,13 +105,6 @@ public class ThornStormEventSystem : ModSystem
                 return;
         }
 
-        /*
-        // Rola a chance de spawn (original: 15% por verificação)
-        if (Main.rand.NextFloat() > MiniTornadoSpawnChance)
-            return;
-        */
-
-        // Procura uma posição no fundo do oceano
         Vector2 spawnPosition = FindOceanFloorPosition();
         if (spawnPosition == Vector2.Zero)
             return;
@@ -173,12 +125,8 @@ public class ThornStormEventSystem : ModSystem
         }
     }
 
-    // =========================================================
-    // CONTROLE DO EVENTO
-    // =========================================================
-
     /// <summary>
-    /// Chamado quando o Mini Tornado é destruído pelo jogador.
+    /// Starts the event after the summon tornado is defeated.
     /// </summary>
     public static void StartEvent()
     {
@@ -191,7 +139,6 @@ public class ThornStormEventSystem : ModSystem
         DesertDefeated = false;
         CorruptionDefeated = false;
 
-        // Spawna os 4 tornados de bioma
         SpawnBiomeTornado(TornadoBiome.Jungle);
         SpawnBiomeTornado(TornadoBiome.Snow);
         SpawnBiomeTornado(TornadoBiome.Desert);
@@ -206,7 +153,7 @@ public class ThornStormEventSystem : ModSystem
     }
 
     /// <summary>
-    /// Registra a destruição de um dos 4 tornados de bioma.
+    /// Records defeat of one of the four biome tornadoes and triggers the final storm once all 4 fall.
     /// </summary>
     public static void RegisterTornadoDefeated(TornadoBiome biome)
     {
@@ -254,7 +201,6 @@ public class ThornStormEventSystem : ModSystem
 
         SyncEventState();
 
-        // Se os 4 foram derrotados, prepara a tempestade final!
         if (DefeatedCount >= 4)
         {
             CurrentState = ThornStormEventState.FinalStorm;
@@ -270,15 +216,10 @@ public class ThornStormEventSystem : ModSystem
         }
     }
 
-    // =========================================================
-    // CONTROLE DA TEMPESTADE FINAL E DO BOSS
-    // =========================================================
-
     private static void UpdateFinalStorm()
     {
         int bossType = ModContent.NPCType<ThornStormBoss>();
 
-        // Verifica se o boss já está ativo no mundo
         bool bossAlive = false;
         for (int i = 0; i < Main.maxNPCs; i++)
         {
@@ -295,7 +236,7 @@ public class ThornStormEventSystem : ModSystem
 
         _finalStormTimer++;
 
-        // 180 ticks (3 segundos): aviso da aproximação colossal
+        // 180 ticks (3 seconds): announce impending approach
         if (_finalStormTimer >= 180 && !_announcedFinalStormWarning)
         {
             _announcedFinalStormWarning = true;
@@ -305,7 +246,7 @@ public class ThornStormEventSystem : ModSystem
             );
         }
 
-        // 360 ticks (6 segundos): spawn do Boss nos céus acima do jogador
+        // 360 ticks (6 seconds): spawn boss above target player
         if (_finalStormTimer >= 360)
         {
             _finalStormTimer = 0;
@@ -342,7 +283,7 @@ public class ThornStormEventSystem : ModSystem
     }
 
     /// <summary>
-    /// Chamado quando o Boss final é derrotado pelo jogador.
+    /// Called when the final boss is defeated.
     /// </summary>
     public static void OnBossDefeated()
     {
@@ -360,8 +301,7 @@ public class ThornStormEventSystem : ModSystem
     }
 
     /// <summary>
-    /// Chamado caso todos os jogadores morram e o Boss escape para os céus.
-    /// Reseta o evento para que possa ser tentado novamente.
+    /// Called when the boss despawns, resetting the event state for a retry.
     /// </summary>
     public static void OnBossEscaped()
     {
@@ -378,10 +318,6 @@ public class ThornStormEventSystem : ModSystem
 
         SyncEventState();
     }
-
-    // =========================================================
-    // CRIAÇÃO DOS TORNADOS NOS BIOMAS
-    // =========================================================
 
     private static void SpawnBiomeTornado(TornadoBiome biome)
     {
@@ -401,10 +337,6 @@ public class ThornStormEventSystem : ModSystem
             Main.npc[npcIndex].netUpdate = true;
         }
     }
-
-    // =========================================================
-    // LOCALIZAÇÃO DE POSIÇÕES DE BIOMA NO MUNDO
-    // =========================================================
 
     public static Vector2 FindBiomeSurfacePosition(TornadoBiome biome)
     {
@@ -439,7 +371,7 @@ public class ThornStormEventSystem : ModSystem
                 break;
         }
 
-        // Amostragem de colunas para encontrar a área de maior concentração do bioma
+        // Sample columns to find biome concentration
         int bestX = (int)(Main.maxTilesX * defaultFraction);
         int startX = (int)(Main.maxTilesX * 0.1f);
         int endX = (int)(Main.maxTilesX * 0.9f);
@@ -462,7 +394,7 @@ public class ThornStormEventSystem : ModSystem
         }
 
     FoundBiomeX:
-        // Encontra o topo da superfície sólida nessa coluna
+        // Find solid ground surface
         int groundY = (int)Main.worldSurface;
         for (int y = (int)(Main.worldSurface * 0.4f); y < (int)Main.worldSurface + 150; y++)
         {
@@ -476,13 +408,11 @@ public class ThornStormEventSystem : ModSystem
             }
         }
 
-        // Flutuando aproximadamente 120px acima do chão
         return new Vector2(bestX * 16f, groundY * 16f - 120f);
     }
 
     private static Vector2 FindOceanFloorPosition()
     {
-        // Escolhe o oceano esquerdo ou direito aleatoriamente
         bool useLeft = Main.rand.NextBool();
         int oceanX = useLeft
             ? Main.rand.Next(60, 150)
@@ -503,10 +433,6 @@ public class ThornStormEventSystem : ModSystem
 
         return new Vector2(oceanX * 16f, groundY * 16f - 40f);
     }
-
-    // =========================================================
-    // MULTIPLAYER E SINCRONIZAÇÃO
-    // =========================================================
 
     public static void SyncEventState(int toWho = -1, int fromWho = -1)
     {
