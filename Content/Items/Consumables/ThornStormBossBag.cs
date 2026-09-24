@@ -44,22 +44,40 @@ public class ThornStormBossBag : ModItem
         itemLoot.Add(ItemDropRule.Common(ItemID.LunarBar, 1, 25, 40));
 
         // DragonPower mount summon item with scaled drop rates:
-        // For the Worthy / Legendary: ~14.3% (1 in 7)
-        // Master Mode:                10% (1 in 10)
-        // Expert Mode:                5% (1 in 20)
-        if (Main.getGoodWorld)
-        {
-            itemLoot.Add(ItemDropRule.Common(ModContent.ItemType<DragonPower>(), 7));
-        }
-        else
-        {
-            var masterRule = new LeadingConditionRule(new Conditions.IsMasterMode());
-            masterRule.OnSuccess(ItemDropRule.Common(ModContent.ItemType<DragonPower>(), 10));
-            itemLoot.Add(masterRule);
+        // - For the Worthy / Legendary: ~14.3% (1 in 7)
+        // - Master Mode (or Journey slider >= 3x): 10% (1 in 10)
+        // - Expert Mode / Journey Mode / Normal: 5% (1 in 20)
+        LeadingConditionRule ftwRule = new(new FTWMountDropCondition());
+        ftwRule.OnSuccess(ItemDropRule.Common(ModContent.ItemType<DragonPower>(), 7));
+        itemLoot.Add(ftwRule);
 
-            var expertRule = new LeadingConditionRule(new Conditions.IsExpert());
-            expertRule.OnSuccess(ItemDropRule.Common(ModContent.ItemType<DragonPower>(), 20));
-            itemLoot.Add(expertRule);
-        }
+        LeadingConditionRule masterRule = new(new MasterMountDropCondition());
+        masterRule.OnSuccess(ItemDropRule.Common(ModContent.ItemType<DragonPower>(), 10));
+        itemLoot.Add(masterRule);
+
+        LeadingConditionRule defaultRule = new(new DefaultMountDropCondition());
+        defaultRule.OnSuccess(ItemDropRule.Common(ModContent.ItemType<DragonPower>(), 20));
+        itemLoot.Add(defaultRule);
     }
+}
+
+public class FTWMountDropCondition : IItemDropRuleCondition
+{
+    public bool CanDrop(DropAttemptInfo info) => Main.getGoodWorld;
+    public bool CanShowItemDropInUI() => true;
+    public string GetConditionDescription() => null;
+}
+
+public class MasterMountDropCondition : IItemDropRuleCondition
+{
+    public bool CanDrop(DropAttemptInfo info) => !Main.getGoodWorld && (Main.masterMode || (Main.GameModeInfo.IsJourneyMode && Main.GameModeInfo.EnemyDamageMultiplier >= 3f));
+    public bool CanShowItemDropInUI() => true;
+    public string GetConditionDescription() => null;
+}
+
+public class DefaultMountDropCondition : IItemDropRuleCondition
+{
+    public bool CanDrop(DropAttemptInfo info) => !Main.getGoodWorld && !(Main.masterMode || (Main.GameModeInfo.IsJourneyMode && Main.GameModeInfo.EnemyDamageMultiplier >= 3f));
+    public bool CanShowItemDropInUI() => true;
+    public string GetConditionDescription() => null;
 }

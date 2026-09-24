@@ -682,13 +682,15 @@ public class ThornStormBoss : ModNPC
 
     public override void ModifyNPCLoot(NPCLoot npcLoot)
     {
-        // Classic mode: direct Luminite bar drop
-        LeadingConditionRule classicRule = new(new Conditions.NotExpert());
+        // Classic mode only: direct Luminite bar drop (strictly non-expert, non-journey)
+        LeadingConditionRule classicRule = new(new ClassicOnlyDropCondition());
         classicRule.OnSuccess(ItemDropRule.Common(ItemID.LunarBar, 1, 25, 40));
         npcLoot.Add(classicRule);
 
-        // Expert / Master / FTW: Boss treasure bag
-        npcLoot.Add(ItemDropRule.BossBag(ModContent.ItemType<ThornStormBossBag>()));
+        // Expert / Master / FTW / Journey mode: Boss treasure bag
+        LeadingConditionRule bagRule = new(new ExpertOrJourneyDropCondition());
+        bagRule.OnSuccess(ItemDropRule.Common(ModContent.ItemType<ThornStormBossBag>()));
+        npcLoot.Add(bagRule);
 
         // Trophy: 10% direct drop on any difficulty
         npcLoot.Add(ItemDropRule.Common(ModContent.ItemType<ThornStormBossTrophy>(), 10));
@@ -738,4 +740,18 @@ public class ThornStormBoss : ModNPC
 
         ThornStormEventSystem.OnBossDefeated();
     }
+}
+
+public class ClassicOnlyDropCondition : IItemDropRuleCondition
+{
+    public bool CanDrop(DropAttemptInfo info) => !info.IsExpertMode && !Main.GameModeInfo.IsJourneyMode;
+    public bool CanShowItemDropInUI() => true;
+    public string GetConditionDescription() => null;
+}
+
+public class ExpertOrJourneyDropCondition : IItemDropRuleCondition
+{
+    public bool CanDrop(DropAttemptInfo info) => info.IsExpertMode || Main.GameModeInfo.IsJourneyMode;
+    public bool CanShowItemDropInUI() => true;
+    public string GetConditionDescription() => null;
 }
