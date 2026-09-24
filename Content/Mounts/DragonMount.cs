@@ -12,7 +12,7 @@ using O2ThornRain.Content.Buffs;
 namespace O2ThornRain.Content.Mounts;
 
 /// <summary>
-/// Montaria voadora do Dragão Celestial do Cultista.
+/// Montaria voadora do Dragão Espinhento.
 /// Concede voo infinito, agilidade extrema e imunidade exclusiva aos espinhos da Thorn Rain.
 /// Utiliza folha de animação com 9 quadros de 200x100 px para um voo ondulatório contínuo e majestoso.
 /// </summary>

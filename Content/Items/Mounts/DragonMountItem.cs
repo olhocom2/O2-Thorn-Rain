@@ -6,7 +6,7 @@ using O2ThornRain.Content.Mounts;
 namespace O2ThornRain.Content.Items.Mounts;
 
 /// <summary>
-/// Mount summon item for the celestial cultist dragon.
+/// Mount summon item for the celestial spike dragon.
 /// Grants infinite flight, high agility, and immunity to Thorn Rain spikes.
 /// </summary>
 public class DragonMountItem : ModItem

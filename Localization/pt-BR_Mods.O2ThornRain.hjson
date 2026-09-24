@@ -20,7 +20,7 @@ Items: {
 		Tooltip:
 			'''
 			Uma relíquia ancestral obtida ao subjugar o Olho da Tempestade
-			Invoca o lendário Dragão do Cultista como montaria
+			Invoca o lendário Dragão Espinhento como montaria
 			Concede voo infinito, agilidade extrema e imunidade aos espinhos da tempestade
 			'''
 	}
@@ -48,12 +48,12 @@ Items: {
 
 Buffs: {
 	DragonMountBuff: {
-		DisplayName: Dragão do Cultista
-		Description: Você cavalga o dragão celestial da tempestade. Imune aos espinhos da Thorn Rain!
+		DisplayName: Dragão Espinhento
+		Description: Você cavalga o dragão espinhento da tempestade. Imune aos espinhos da Thorn Rain!
 	}
 }
 
-Mounts.DragonMount.DisplayName: Dragão do Cultista
+Mounts.DragonMount.DisplayName: Dragão Espinhento
 
 NPCs: {
 	ThornStormSummonTornado.DisplayName: Pequeno Vórtice Abissal

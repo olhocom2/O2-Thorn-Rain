@@ -20,7 +20,7 @@ Items: {
 		Tooltip:
 			'''
 			An ancient relic obtained by subduing the Eye of the Thorn Storm
-			Summons the legendary Cultist Dragon as a mount
+			Summons the legendary Spike Dragon as a mount
 			Grants infinite flight, extreme agility, and immunity to storm spikes
 			'''
 	}
@@ -48,12 +48,12 @@ Items: {
 
 Buffs: {
 	DragonMountBuff: {
-		DisplayName: Cultist Dragon
+		DisplayName: Spike Dragon
 		Description: You ride the celestial storm dragon. Immune to Thorn Rain spikes!
 	}
 }
 
-Mounts.DragonMount.DisplayName: Cultist Dragon
+Mounts.DragonMount.DisplayName: Spike Dragon
 
 NPCs: {
 	ThornStormSummonTornado.DisplayName: Abyssal Mini Vortex
