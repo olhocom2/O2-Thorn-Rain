@@ -7,7 +7,6 @@ using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
 using O2ThornRain.Common.Systems;
-using O2ThornRain.Content.BossBars;
 using O2ThornRain.Content.Projectiles;
 
 namespace O2ThornRain.Content.NPCs.Pillars;
@@ -57,10 +56,9 @@ public class ThornBiomeTornado : ModNPC
         NPC.noTileCollide = true;
         NPC.aiStyle = -1;
 
-        // Treated as mini-boss for HUD bar and map icon
-        NPC.boss = true;
+        NPC.boss = false;
         NPC.friendly = false;
-        NPC.BossBar = ModContent.GetInstance<ThornBiomeTornadoBar>();
+        NPC.BossBar = null;
     }
 
     public override bool CheckActive()
