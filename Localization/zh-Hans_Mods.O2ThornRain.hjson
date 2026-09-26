@@ -1,0 +1,86 @@
+Projectiles: {
+	SpikesProjectile.DisplayName: 荆棘尖刺
+	ThornTornadoProjectile.DisplayName: 荆棘龙卷
+	ThornDragonProjectile.DisplayName: 荆棘飞龙
+}
+
+Items: {
+	DragonPower: {
+		DisplayName: 荆棘短匕
+		Tooltip:
+			'''
+			蕴含狂暴荆棘之力的远古短匕
+			召唤强大的风暴巨龙坐骑
+			骑乘时获得自由飞行能力并免疫荆棘之雨的尖刺
+			'''
+	}
+
+	DragonMountItem: {
+		DisplayName: 苍穹龙怒
+		Tooltip:
+			'''
+			征服荆棘风暴之眼后获得的远古圣物
+			召唤传奇荆棘巨龙作为坐骑
+			提供无限飞行、极高机动性并免疫风暴尖刺伤害
+			'''
+	}
+
+	LightningRod: {
+		DisplayName: 风暴避雷针
+		Tooltip:
+			'''
+			引导四大远古之风的愤怒
+			召唤“四相风暴”事件
+			若事件已处于激活状态则无法使用
+			'''
+	}
+
+	ThornStormBossBag: {
+		DisplayName: 宝藏袋（荆棘风暴之眼）
+		Tooltip: "{$CommonItemTooltip.RightClickToOpen}"
+	}
+
+	ThornStormBossTrophy: {
+		DisplayName: 荆棘风暴之眼纪念章
+		Tooltip: ""
+	}
+}
+
+Buffs: {
+	DragonMountBuff: {
+		DisplayName: 荆棘巨龙
+		Description: 你正骑乘苍穹风暴巨龙。免疫荆棘之雨尖刺！
+	}
+}
+
+Mounts.DragonMount.DisplayName: 荆棘巨龙
+
+NPCs: {
+	ThornStormSummonTornado.DisplayName: 深渊微型漩涡
+	ThornBiomeTornado.DisplayName: 远古荆棘龙卷
+	ThornStormBoss.DisplayName: 荆棘风暴之眼
+	ThornMinionTornado.DisplayName: 贪婪微型漩涡
+}
+
+Tiles.ThornStormBossTrophyTile.MapEntry: 纪念章
+
+Biomes: {
+	Jungle: 丛林
+	Snow: 雪原
+	Desert: 沙漠
+	Corruption: 腐化之地
+}
+
+Events: {
+	TornadoWarning: 附近侦测到了龙卷风的威胁……
+	TornadoIncoming: 荆棘龙卷正在逼近！
+	RainIntensifying: 荆棘之雨正变得愈发猛烈……
+	StormApproaching: 荆棘风暴即将来临！
+	MiniTornadoSpawned: 海洋深处浮现出一个神秘的漩涡……
+	StormOfFourStarted: 四相风暴已经苏醒！四道远古龙卷已降临于世间！
+	TornadoDefeated: {0}荆棘龙卷已被平息！（{1}/4）
+	AllFourDefeated: 四方之风已归于寂静……
+	FinalStormIncoming: 某种庞然大物正穿过风暴逼近……
+	FinalStormVictory: 最终风暴已然消散……宁静重归世间。
+	EventExpired: 狂暴的狂风已经平息，天气重归平静……
+}

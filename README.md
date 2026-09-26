@@ -121,7 +121,8 @@ O2ThornRain/
 │       └── ThornStormBossTrophyTile.cs # Wall trophy tile entity
 ├── Localization/
 │   ├── en-US_Mods.O2ThornRain.hjson # English localization strings
-│   └── pt-BR_Mods.O2ThornRain.hjson # Brazilian Portuguese localization strings
+│   ├── pt-BR_Mods.O2ThornRain.hjson # Brazilian Portuguese localization strings
+│   └── zh-Hans_Mods.O2ThornRain.hjson # Simplified Chinese localization strings
 ├── Properties/
 │   └── launchSettings.json          # Debugging and launch configuration
 ├── build.txt                        # tModLoader mod metadata (version, author, name)

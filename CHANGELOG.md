@@ -28,6 +28,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   - Classic: Luminite bars (25–40) + Trophy 10% direct drop.
   - Expert/Master/FTW/Journey: Boss Bag + Trophy 10% direct. Mount inside bag at scaled chance. All items drop normally in Journey mode.
 - **Boss size increased 50%** — hitbox 240 → 360, visual scale 2.05f → 3.07f, hover offsets adjusted per phase.
+- **Simplified Chinese Localization (`zh-Hans`)** — full Chinese translations for items, NPCs, projectiles, buffs, mount, biomes, and event messages.
 
 ### Fixed & Cleaned
 

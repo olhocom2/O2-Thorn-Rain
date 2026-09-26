@@ -80,7 +80,7 @@ Feature requests are always appreciated! Please describe:
 - **Multiplayer Consideration:**
   - Always guard world-altering spawns behind server-side checks (`Main.netMode != NetmodeID.MultiplayerClient`).
 - **Localization:**
-  - Add user-facing text to `Localization/en-US_Mods.O2ThornRain.hjson` and `Localization/pt-BR_Mods.O2ThornRain.hjson`.
+  - Add user-facing text to `Localization/en-US_Mods.O2ThornRain.hjson`, `Localization/pt-BR_Mods.O2ThornRain.hjson`, and `Localization/zh-Hans_Mods.O2ThornRain.hjson`.
 
 ---
 
