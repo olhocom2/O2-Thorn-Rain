@@ -12,6 +12,20 @@
 [*] [b]Multiplayer Friendly:[/b] Server-authoritative logic prevents desyncs and item duplication on dedicated and host & play servers.
 [/list]
 
+[h2]The Storm of Four Event & Boss[/h2]
+[list]
+[*] [b]The Storm of Four:[/b] An ancient event awakened by either finding a mysterious Abyssal Mini Vortex in the ocean depths during a storm or by crafting and using the [b]Storm Lightning Rod[/b].
+[*] [b]Four Biome Tornadoes:[/b] Four powerful ancestral pillars emerge across the Jungle, Snow, Desert, and Corruption/Crimson. Defeating all four summons the ultimate tempest.
+[*] [b]The Eye of the Thorn Storm Boss:[/b] A multi-phase colossal aerial boss featuring dynamic speed, destructive mini-vortex minions, custom boss bar, and an immersive ambient storm intro (blizzard particles, dark vignette, heavy rain).
+[*] [b]2-Day World Event Timer:[/b] If the player does not eliminate the pillars and defeat the boss within 2 in-game days, the turbulent winds naturally dissipate and calm weather returns.
+[*] [b]Exclusive Rewards:[/b]
+  [list]
+  [*] [b]Spike Dragon Mount (Dragon Power):[/b] Grants infinite flight, extreme agility, and immunity to falling thorn spikes.
+  [*] [b]Eye of the Thorn Storm Trophy:[/b] Elegant 3x3 wall trophy.
+  [*] [b]Boss Treasure Bag:[/b] Drops in Expert, Master, FTW, and Journey modes with guaranteed coins, Luminite bars, and scaled mount chances.
+  [/list]
+[/list]
+
 [h2]Protection & Survival Mechanics[/h2]
 Surviving the Thorn Rain requires preparation! Utilize vanilla tools and potions to brave the storm:
 
@@ -26,9 +40,24 @@ Inspect your Umbrella to view its status: New (100%-50%), Damaged (49%-15%), Alm
 Need an Umbrella? Vanilla Umbrella Slimes now have a 5% chance to drop the vanilla Umbrella upon defeat!
 [*] [b]Ironskin Potion Immunity:[/b]
 Drinking an Ironskin Potion grants absolute immunity to Thorn Rain damage while the buff is active (and spares your Umbrella from losing durability)!
+[*] [b]Spike Dragon Mount:[/b]
+Riding the Spike Dragon mount grants complete immunity to falling thorns.
 [/list]
 
 [h2]Version History[/h2]
+[b]v0.3.0 - The Boss & Storm Update[/b]
+[list]
+[*] Added "The Storm of Four" event with 4 biome tornado pillars (Jungle, Snow, Desert, Corruption).
+[*] Added "Eye of the Thorn Storm" multi-phase boss with custom AI, custom boss bar, and dynamic difficulty scaling.
+[*] Added destructible Ravenous Mini Vortex minions.
+[*] Added atmospheric intro system (darkened sky, blizzard dust, gale winds, heavy rain).
+[*] Added Storm Lightning Rod summon item (crafted with Luminite Bars, Clouds, and Bottled Water at the Ancient Manipulator).
+[*] Added 2-day in-game timeout rule where uncompleted events dissipate naturally.
+[*] Added Spike Dragon mount with infinite flight and spike immunity.
+[*] Added Eye of the Thorn Storm Trophy (3x3 wall tile) and Treasure Bag.
+[*] Restored 100% natural weather cycles and cleaned all development/testing rules.
+[/list]
+
 [b]v0.2.0 - Protection & Progression Update[/b]
 [list]
 [*] Added Vanilla Umbrella protection with exposure durability (100% to 0%).

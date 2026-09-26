@@ -19,9 +19,8 @@ namespace O2ThornRain.Content.Projectiles;
 /// O sprite é desenhado manualmente em múltiplas camadas
 /// verticais para criar um tornado alto e volumoso.
 ///
-/// O tornado não causa dano por contato.
-/// Sua função é atravessar o cenário e disparar
-/// rajadas de SpikesProjectile.
+/// O tornado causa dano por contato físico direto ao atingir o jogador
+/// e dispara rajadas de SpikesProjectile enquanto atravessa o cenário.
 /// </summary>
 public class ThornTornadoProjectile : ModProjectile
 {
@@ -91,6 +90,13 @@ public class ThornTornadoProjectile : ModProjectile
 
 
     // =========================================================
+    // DANO E IMPACTO POR CONTATO
+    // =========================================================
+
+    public const float TornadoKnockback = 4f;
+
+
+    // =========================================================
     // CONTROLE INTERNO
     // =========================================================
 
@@ -115,9 +121,7 @@ public class ThornTornadoProjectile : ModProjectile
 
     public override void SetDefaults()
     {
-        // Área física maior para acompanhar o novo volume visual.
-        //
-        // O tornado continua sem dano de contato.
+        // Área física para acompanhar o volume visual e colisão de contato.
         Projectile.width = 180;
         Projectile.height = 420;
 
@@ -128,13 +132,40 @@ public class ThornTornadoProjectile : ModProjectile
 
         Projectile.penetrate = -1;
 
-        Projectile.hostile = false;
+        // O próprio corpo do tornado causa dano por contato ao atingir o jogador.
+        Projectile.hostile = true;
         Projectile.friendly = false;
+
+        Projectile.damage = SpikeRainSystem.GetSpikeDamage();
+        Projectile.knockBack = TornadoKnockback;
 
         Projectile.scale = 0.1f;
         Projectile.alpha = 255;
 
         Projectile.aiStyle = 0;
+    }
+
+
+    // =========================================================
+    // COLISÃO COM O JOGADOR
+    // =========================================================
+
+    public override bool CanHitPlayer(Player target)
+    {
+        // O tornado só atinge o jogador quando estiver plenamente formado.
+        if (_lifetimeTimer < FormationTicks)
+            return false;
+
+        // O tornado atinge o jogador mesmo se estiver atravessando paredes ou dentro de construções.
+        return true;
+    }
+
+
+    public override bool? Colliding(Rectangle projHitbox, Rectangle targetHitbox)
+    {
+        // Avalia colisão direta pela sobreposição dos retângulos,
+        // garantindo que paredes, tetos e blocos sólidos não bloqueiem o dano.
+        return projHitbox.Intersects(targetHitbox);
     }
 
 
@@ -423,13 +454,6 @@ public class ThornTornadoProjectile : ModProjectile
          * Distância vertical TOTAL do tornado.
          */
         const float totalHeight = 360f;
-
-        /*
-         * Quanto mais próximo de zero,
-         * mais as camadas ficam grudadas.
-         */
-        float spacing =
-            totalHeight / (layers - 1);
 
         for (int i = 0; i < layers; i++)
         {

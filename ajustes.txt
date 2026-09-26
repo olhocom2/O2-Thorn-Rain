@@ -1,0 +1,10 @@
+drops ocorrendo fora da bolsa, quando abre a bolsa vem mais drops.
+todos os sprites de itens
+para raio enorme
+bolsa feia - pequena
+adaga feia - pequena
+
+boss ainda esta muito pequeno e a animação em frames esta esquisita, ajustar o jiro do furacão
+adicionar entrada do boss, aumentar ventania, ajustar background e aumentar o tamanho do proprio boss
+
+ajustando os sprites e o boss, já vamos ter um 
