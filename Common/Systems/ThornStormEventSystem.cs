@@ -44,6 +44,7 @@ public class ThornStormEventSystem : ModSystem
 {
     private const int SummonCheckIntervalTicks = 300;
     private const float MiniTornadoSpawnChance = 0.15f;
+    public const int EventMaxDurationTicks = 172800; // 2 in-game days (86,400 ticks * 2)
 
     public static ThornStormEventState CurrentState { get; private set; } = ThornStormEventState.Inactive;
 
@@ -60,6 +61,7 @@ public class ThornStormEventSystem : ModSystem
 
     private static int _checkTimer;
     private static int _finalStormTimer;
+    private static int _eventDurationTimer;
     private static bool _announcedFinalStormWarning;
 
     public override void ClearWorld()
@@ -71,6 +73,7 @@ public class ThornStormEventSystem : ModSystem
         CorruptionDefeated = false;
         _checkTimer = 0;
         _finalStormTimer = 0;
+        _eventDurationTimer = 0;
         _announcedFinalStormWarning = false;
     }
 
@@ -83,19 +86,35 @@ public class ThornStormEventSystem : ModSystem
         {
             UpdateMiniTornadoSpawnCheck();
         }
-        else if (CurrentState == ThornStormEventState.FinalStorm)
+        else if (CurrentState == ThornStormEventState.Active || CurrentState == ThornStormEventState.FinalStorm)
         {
-            UpdateFinalStorm();
+            _eventDurationTimer++;
+            if (_eventDurationTimer >= EventMaxDurationTicks)
+            {
+                ExpireEvent();
+                return;
+            }
+
+            if (CurrentState == ThornStormEventState.FinalStorm)
+            {
+                UpdateFinalStorm();
+            }
         }
     }
 
     private static void UpdateMiniTornadoSpawnCheck()
     {
+        if (!Main.raining || SpikeRainSystem.CurrentIntensity != ThornRainIntensity.Storm)
+            return;
+
         _checkTimer++;
-        if (_checkTimer < 60)
+        if (_checkTimer < SummonCheckIntervalTicks)
             return;
 
         _checkTimer = 0;
+
+        if (Main.rand.NextFloat() > MiniTornadoSpawnChance)
+            return;
 
         int summonNpcType = ModContent.NPCType<ThornStormSummonTornado>();
         for (int i = 0; i < Main.maxNPCs; i++)
@@ -138,6 +157,9 @@ public class ThornStormEventSystem : ModSystem
         SnowDefeated = false;
         DesertDefeated = false;
         CorruptionDefeated = false;
+        _eventDurationTimer = 0;
+        _finalStormTimer = 0;
+        _announcedFinalStormWarning = false;
 
         SpawnBiomeTornado(TornadoBiome.Jungle);
         SpawnBiomeTornado(TornadoBiome.Snow);
@@ -291,6 +313,7 @@ public class ThornStormEventSystem : ModSystem
             return;
 
         CurrentState = ThornStormEventState.Completed;
+        _eventDurationTimer = 0;
 
         BroadcastEventMessage(
             "Mods.O2ThornRain.Events.FinalStormVictory",
@@ -313,8 +336,54 @@ public class ThornStormEventSystem : ModSystem
         SnowDefeated = false;
         DesertDefeated = false;
         CorruptionDefeated = false;
+        _eventDurationTimer = 0;
         _finalStormTimer = 0;
         _announcedFinalStormWarning = false;
+
+        SyncEventState();
+    }
+
+    /// <summary>
+    /// Despawns all event entities and resets event state if the player fails to complete the event within 2 in-game days.
+    /// </summary>
+    public static void ExpireEvent()
+    {
+        if (Main.netMode == NetmodeID.MultiplayerClient)
+            return;
+
+        int pillarType = ModContent.NPCType<ThornBiomeTornado>();
+        int summonType = ModContent.NPCType<ThornStormSummonTornado>();
+        int bossType = ModContent.NPCType<ThornStormBoss>();
+        int minionType = ModContent.NPCType<ThornMinionTornado>();
+
+        for (int i = 0; i < Main.maxNPCs; i++)
+        {
+            NPC npc = Main.npc[i];
+            if (npc.active && (npc.type == pillarType || npc.type == summonType || npc.type == bossType || npc.type == minionType))
+            {
+                npc.active = false;
+                npc.netSkip = -1;
+                npc.life = 0;
+                if (Main.netMode == NetmodeID.Server)
+                {
+                    NetMessage.SendData(MessageID.SyncNPC, -1, -1, null, i);
+                }
+            }
+        }
+
+        CurrentState = ThornStormEventState.Inactive;
+        JungleDefeated = false;
+        SnowDefeated = false;
+        DesertDefeated = false;
+        CorruptionDefeated = false;
+        _eventDurationTimer = 0;
+        _finalStormTimer = 0;
+        _announcedFinalStormWarning = false;
+
+        BroadcastEventMessage(
+            "Mods.O2ThornRain.Events.EventExpired",
+            new Color(130, 210, 240)
+        );
 
         SyncEventState();
     }
