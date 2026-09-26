@@ -164,9 +164,8 @@ public class SpikeRainSystem : ModSystem
 
     public override void PostUpdateWorld()
     {
-        Main.raining = true;
-        Main.rainTime = 86400;
-        Main.maxRaining = 0.8f;
+        if (!Main.raining)
+            return;
 
         if (Main.netMode == NetmodeID.MultiplayerClient)
             return;

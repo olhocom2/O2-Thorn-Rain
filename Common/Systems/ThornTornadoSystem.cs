@@ -32,8 +32,6 @@ public class ThornTornadoSystem : ModSystem
     public const int CooldownDurationTicks = 3600; // 60 seconds
     public const float SpawnDistanceX = 1200f;
 
-    public static bool DebugForceTornado;
-
     public static TornadoEventState CurrentState { get; private set; } = TornadoEventState.None;
 
     private static int _stateTimer;
@@ -45,13 +43,6 @@ public class ThornTornadoSystem : ModSystem
     {
         if (Main.netMode == NetmodeID.MultiplayerClient)
             return;
-
-        if (DebugForceTornado)
-        {
-            DebugForceTornado = false;
-            StartTornadoWarning();
-            return;
-        }
 
         switch (CurrentState)
         {

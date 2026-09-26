@@ -455,13 +455,6 @@ public class ThornTornadoProjectile : ModProjectile
          */
         const float totalHeight = 360f;
 
-        /*
-         * Quanto mais próximo de zero,
-         * mais as camadas ficam grudadas.
-         */
-        float spacing =
-            totalHeight / (layers - 1);
-
         for (int i = 0; i < layers; i++)
         {
             float normalized =
