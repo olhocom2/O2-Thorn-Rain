@@ -1,6 +1,6 @@
 # O2 Thorn Rain 🌧️🌵
 
-[![Version](https://img.shields.io/badge/version-v0.2.0-informational.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v0.3.0-informational.svg)](CHANGELOG.md)
 [![Terraria](https://img.shields.io/badge/Terraria-v1.4.4.9-green.svg)](https://terraria.org/)
 [![tModLoader](https://img.shields.io/badge/tModLoader-v2023.11+-orange.svg)](https://github.com/tModLoader/tModLoader)
 [![C#](https://img.shields.io/badge/Language-C%23-blue.svg)](https://learn.microsoft.com/en-us/dotnet/csharp/)
@@ -33,6 +33,23 @@
 
 ---
 
+## 🌪️ The Storm of Four & Boss Encounter
+
+- 🌀 **The Storm of Four Event:**
+  - Awakens naturally by confronting an Abyssal Mini Vortex in the ocean depths during a storm, or at will by crafting the **Storm Lightning Rod** (`LightningRod`).
+  - Summons four ancestral tornadoes across the world (Jungle, Snow, Desert, and Corruption/Crimson).
+  - Defeating all four pillars summons the ultimate storm.
+  - **2-Day Expiration Timer:** If the four pillars and boss are not eliminated within 2 in-game days (172,800 ticks / 48 real minutes), the tempest naturally calms down and dissipates.
+- 👁️ **Eye of the Thorn Storm Boss:**
+  - Multi-phase celestial boss featuring dynamic scaling across difficulty modes.
+  - Custom boss health bar, summon minions (**Ravenous Mini Vortex**), and an atmospheric entrance featuring darkness, dense clouds, blizzard particles, and gale winds.
+- 🐉 **Legendary Rewards:**
+  - **Spike Dragon Mount (`DragonPower`):** Grants infinite flight, high agility, and immunity to falling thorn spikes.
+  - **Boss Wall Trophy (`ThornStormBossTrophy`):** Decorative 3x3 wall trophy.
+  - **Boss Treasure Bag (`ThornStormBossBag`):** Drops in Expert, Master, FTW, and Journey modes with guaranteed coins, Luminite bars, and scaled mount chances.
+
+---
+
 ## ☂️ Protection & Survival Mechanics
 
 Surviving the Thorn Rain requires preparation! Utilize vanilla tools and potions to brave the storm:
@@ -49,7 +66,9 @@ Surviving the Thorn Rain requires preparation! Utilize vanilla tools and potions
   - Drinking an Ironskin Potion (`BuffID.Ironskin`) provides **absolute immunity** to Thorn Rain damage while active.
   - While Ironskin is active, your equipped Umbrella suffers **no durability loss**.
 - 💧 **Umbrella Slime Drop:**
-  - Vanilla Umbrella Slimes (`NPCID.UmbrellaSlime`) now have a **5% chance** to drop the vanilla Umbrella upon defeat.
+  - Vanilla Umbrella Slimes (`NPCID.UmbrellaSlime`) have a **5% chance** to drop the vanilla Umbrella upon defeat.
+- 🐉 **Spike Dragon Mount:**
+  - Riding the Spike Dragon grants full immunity against falling thorn spikes.
 
 ---
 
@@ -59,23 +78,50 @@ Surviving the Thorn Rain requires preparation! Utilize vanilla tools and potions
 O2ThornRain/
 ├── assets/
 │   ├── thornRain.gif                # Hazard gameplay showcase animation
-│   └── umbrella.gif                 # Umbrella protection & durability showcase animation
+│   └── umbrella.gif                 # Umbrella protection showcase animation
 ├── Common/
 │   ├── GlobalItems/
-│   │   └── UmbrellaGlobalItem.cs    # Umbrella durability, inventory bar, tooltips & network sync
+│   │   └── UmbrellaGlobalItem.cs    # Umbrella durability, inventory bar & tooltips
 │   ├── GlobalNPCs/
 │   │   └── UmbrellaSlimeGlobalNPC.cs # Umbrella Slime loot table injection (5% drop)
 │   ├── Players/
-│   │   └── ThornRainPlayer.cs       # Player protection priorities, exposure tracking & durability decay
+│   │   └── ThornRainPlayer.cs       # Player protection priorities & durability decay
 │   └── Systems/
-│       └── SpikeRainSystem.cs       # World update hooks, wind physics, progressive damage & spawn regulation
+│       ├── SpikeRainSystem.cs       # World update hooks, wind physics & progressive damage
+│       ├── ThornBossIntroSystem.cs  # Atmospheric sky darkening, storm and blizzard effects
+│       ├── ThornStormEventSystem.cs # Complete lifecycle for "The Storm of Four" event
+│       └── ThornTornadoSystem.cs    # World hazard tornado spawner & state machine
 ├── Content/
-│   └── Projectiles/
-│       ├── SpikesProjectile.cs     # Spike projectile behavior, hit protection hook & lifetime
-│       └── SpikesProjectile.png    # Sprite asset
+│   ├── Buffs/
+│   │   └── DragonMountBuff.cs       # Mount buff definition
+│   ├── Items/
+│   │   ├── Consumables/
+│   │   │   ├── LightningRod.cs      # Event summon item (craftable with Luminite, Cloud, Water)
+│   │   │   └── ThornStormBossBag.cs # Boss treasure bag & scaled loot drop rules
+│   │   ├── Mounts/
+│   │   │   ├── DragonMountItem.cs   # Celestial dragon relic item
+│   │   │   └── DragonPower.cs       # Spike Dagger mount summon item
+│   │   └── Placeables/
+│   │       └── ThornStormBossTrophy.cs # Wall trophy item
+│   ├── Mounts/
+│   │   └── DragonMount.cs           # Custom mount data, physics & animations
+│   ├── NPCs/
+│   │   ├── Boss/
+│   │   │   ├── ThornStormBoss.cs    # Eye of the Thorn Storm boss entity & phase AI
+│   │   │   └── ThornStormBossBar.cs # Custom boss bar HUD integration
+│   │   ├── Minions/
+│   │   │   └── ThornMinionTornado.cs # Destructible boss minion vortexes
+│   │   └── Pillars/
+│   │       ├── ThornBiomeTornado.cs # 4 stationary ancestral biome pillars
+│   │       └── ThornStormSummonTornado.cs # Natural ocean summon vortex
+│   ├── Projectiles/
+│   │   ├── SpikesProjectile.cs      # Falling thorn hazard projectile
+│   │   └── ThornTornadoProjectile.cs # Environmental tornado projectile
+│   └── Tiles/
+│       └── ThornStormBossTrophyTile.cs # Wall trophy tile entity
 ├── Localization/
-│   ├── en-US_Mods.O2ThornRain.hjson # English strings
-│   └── pt-BR_Mods.O2ThornRain.hjson # Brazilian Portuguese strings
+│   ├── en-US_Mods.O2ThornRain.hjson # English localization strings
+│   └── pt-BR_Mods.O2ThornRain.hjson # Brazilian Portuguese localization strings
 ├── Properties/
 │   └── launchSettings.json          # Debugging and launch configuration
 ├── build.txt                        # tModLoader mod metadata (version, author, name)
@@ -89,7 +135,6 @@ O2ThornRain/
 ├── COMMIT_CONVENTION.md             # Conventional commit standards
 └── README.md                        # Documentation
 ```
-
 
 ---
 
@@ -121,14 +166,17 @@ O2ThornRain/
 ### Building via Command Line
 Run dotnet build pointing to the project:
 ```bash
-dotnet build O2ThornRain.csproj
+PATH="/usr/local/share/dotnet:$PATH" dotnet build O2ThornRain.csproj /t:Compile
 ```
+
+---
 
 ## 📝 Version History & Changelog
 
 All notable changes and release milestones are tracked in detail in [CHANGELOG.md](CHANGELOG.md).
 
-- **v0.2.0 (Latest):** The Protection Update — Vanilla Umbrella protection with exposure durability, inventory status bar, Ironskin Potion immunity, 5% Umbrella Slime drop, and progressive hazard damage scaling.
+- **v0.3.0 (Latest):** The Boss & Storm Update — "The Storm of Four" event, Eye of the Thorn Storm boss, Storm Lightning Rod summon item, Spike Dragon mount, Boss Treasure Bag, Trophy, and full multiplayer synchronization.
+- **v0.2.0:** The Protection Update — Vanilla Umbrella protection with exposure durability, inventory status bar, Ironskin Potion immunity, 5% Umbrella Slime drop, and progressive hazard damage scaling.
 - **v0.1.0:** Initial Release — Environmental hazard spawner, wind-drift physics, and surface layer detection.
 
 ---

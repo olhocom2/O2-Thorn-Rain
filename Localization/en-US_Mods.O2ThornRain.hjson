@@ -1,1 +1,86 @@
-Projectiles.SpikesProjectile.DisplayName: Spikes Projectile
+Projectiles: {
+	SpikesProjectile.DisplayName: Spikes Projectile
+	ThornTornadoProjectile.DisplayName: Thorn Tornado
+	ThornDragonProjectile.DisplayName: Thorn Dragon
+}
+
+Items: {
+	DragonPower: {
+		DisplayName: Spike Dagger
+		Tooltip:
+			'''
+			An ancestral dagger imbued with tempestuous thorn power
+			Summons a powerful storm dragon mount
+			Grants free flight and immunity to Thorn Rain spikes while mounted
+			'''
+	}
+
+	DragonMountItem: {
+		DisplayName: Wrath of the Celestial Dragon
+		Tooltip:
+			'''
+			An ancient relic obtained by subduing the Eye of the Thorn Storm
+			Summons the legendary Spike Dragon as a mount
+			Grants infinite flight, extreme agility, and immunity to storm spikes
+			'''
+	}
+
+	LightningRod: {
+		DisplayName: Storm Lightning Rod
+		Tooltip:
+			'''
+			Channels the wrath of the four ancestral winds
+			Summons "The Storm of Four" event
+			Cannot be used if the event is already active
+			'''
+	}
+
+	ThornStormBossBag: {
+		DisplayName: Treasure Bag (Eye of the Thorn Storm)
+		Tooltip: "{$CommonItemTooltip.RightClickToOpen}"
+	}
+
+	ThornStormBossTrophy: {
+		DisplayName: Eye of the Thorn Storm Trophy
+		Tooltip: ""
+	}
+}
+
+Buffs: {
+	DragonMountBuff: {
+		DisplayName: Spike Dragon
+		Description: You ride the celestial storm dragon. Immune to Thorn Rain spikes!
+	}
+}
+
+Mounts.DragonMount.DisplayName: Spike Dragon
+
+NPCs: {
+	ThornStormSummonTornado.DisplayName: Abyssal Mini Vortex
+	ThornBiomeTornado.DisplayName: Ancestral Thorn Tornado
+	ThornStormBoss.DisplayName: Eye of the Thorn Storm
+	ThornMinionTornado.DisplayName: Ravenous Mini Vortex
+}
+
+Tiles.ThornStormBossTrophyTile.MapEntry: Trophy
+
+Biomes: {
+	Jungle: Jungle
+	Snow: Snow
+	Desert: Desert
+	Corruption: Corruption
+}
+
+Events: {
+	TornadoWarning: A tornado threat has been spotted nearby...
+	TornadoIncoming: A thorn tornado is approaching!
+	RainIntensifying: The thorn rain is growing more intense...
+	StormApproaching: A thorn storm is approaching!
+	MiniTornadoSpawned: A mysterious vortex has emerged in the ocean depths...
+	StormOfFourStarted: The Storm of Four has awakened! Four ancestral tornadoes have emerged across the world!
+	TornadoDefeated: The {0} Thorn Tornado has been silenced! ({1}/4)
+	AllFourDefeated: The four winds have fallen silent...
+	FinalStormIncoming: Something colossal is approaching through the storm...
+	FinalStormVictory: The final storm has dissipated... Calm returns to the world.
+	EventExpired: The turbulent winds have dissipated, and calm weather has returned...
+}
