@@ -82,8 +82,11 @@ public class LightningRod : ModItem
 
     public override void AddRecipes()
     {
-        CreateRecipe(5)
-            .AddIngredient(ItemID.DirtBlock, 1)
+        CreateRecipe()
+            .AddIngredient(ItemID.LunarBar, 5)
+            .AddIngredient(ItemID.Cloud, 20)
+            .AddIngredient(ItemID.BottledWater, 1)
+            .AddTile(TileID.LunarCraftingStation)
             .Register();
     }
 }
