@@ -1,4 +1,4 @@
-O2 Thorn Rain ( v0.2.0 - Protection & Progression Update ) introduces a perilous environmental hazard to your Terraria world! 
-During rainy weather, sharp thorns and spikes fall continuously from the heavens, challenging surface survival.
-Protect yourself using the vanilla Umbrella (now featuring exposure durability) or an Ironskin Potion!
-Features wind-influenced physics, progressive damage scaling, surface-only hazard zones, and intelligent FPS-conscious projectile management.
+O2 Thorn Rain (v0.3.0 - The Boss & Storm Update) introduces perilous environmental hazards and an epic celestial boss encounter!
+During storms, dangerous thorns rain from the skies, challenging surface survival. Protect yourself with the vanilla Umbrella or Ironskin Potion.
+Venture deep into the tempest or craft the Storm Lightning Rod to awaken "The Storm of Four" event: defeat four ancestral tornadoes across the biomes to challenge the Eye of the Thorn Storm!
+Defeat the boss to claim the Spike Dragon mount, Wall Trophy, and Treasure Bag.
